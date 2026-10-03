@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<meta charset="utf-8">
+<title>e2e</title>
+<link rel="stylesheet" href="../public/css/style.css">
+<pre id="out" dir="ltr" style="position:relative;z-index:99;background:#fff;color:#000">running…</pre>
+<div id="stars"></div>
+<main id="app"></main>
+<script type="module">
+// Plays through the real UI (no ?dev): story, map, planet, a full challenge with a hint,
+// a failed round and passes, then checks stars, unlocks, the station and the parents' page.
+const log = [], out = document.getElementById('out');
+const tick = (ms = 60) => new Promise(r => setTimeout(r, ms));
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const byText = (sel, t) => $$(sel).find(e => e.textContent.includes(t));
+const ok = (cond, msg) => log.push((cond ? 'ok   ' : 'FAIL ') + msg);
+try {
+  localStorage.clear();
+  location.hash = '';
+  await import('../public/js/app.js');
+  const { play } = await import('../public/js/engine.js');
+  await tick();
+  ok(!!$('.modal .story'), 'story shown on first visit');
+  byText('.modal button', 'יוצאים').click();
+  ok(!$('.modal'), 'story closes');
+  ok($$('.planet-card').length >= 1, `map shows ${$$('.planet-card').length} planet(s)`);
+  $('.planet-card').click();
+  await tick();
+  ok($$('.node').length === 9, 'planet path has 9 stations');
+  ok($$('.node.locked').length === 8, 'only the first station is open at the start');
+  $('.node button').click();
+  ok($$('.level').length === 3 && $$('.level:disabled').length === 2, 'level picker: only level 1 open');
+  $('.level').click();
+  await tick();
+  ok(!!$('.modal .intro'), 'intro shown before the first play');
+  $('.modal .btn.primary').click();
+  const check = () => byText('.p-foot button', 'בדיקה'), next = () => $$('.p-foot button').find(b => !b.hidden && /הבא|סיום/.test(b.textContent));
+  for (let i = 0; i < 5; i++) {
+    const { round, widget } = play.current;
+    if (i === 0) {
+      byText('.p-foot button', 'רמז').click();
+      ok($$('.feedback .hint').length === 1, 'hint button shows first hint');
+    }
+    if (i === 1) {
+      widget.set({ n: 0, d: 2 });
+      check().click();
+      ok($('.feedback').classList.contains('warn'), 'first wrong answer gives a warning and a hint');
+      check().click();
+      ok($('.feedback').classList.contains('bad') && $('.feedback').textContent.includes('הפתרון'), 'second wrong answer reveals the solution');
+      ok(round.check(widget.value()), 'solution is shown on the widget');
+    } else {
+      widget.set(round.answer);
+      check().click();
+      ok($('.feedback').classList.contains('good'), `round ${i + 1} correct`);
+    }
+    ok(!!next(), 'next button visible');
+    next().click();
+    await tick();
+  }
+  ok(!!$('.result'), 'result screen');
+  ok($('.score').textContent.includes('4 מתוך 5'), 'score 4/5: ' + $('.score').textContent);
+  ok($('.big-stars').textContent === '★☆☆', 'one star earned');
+  ok(!!$('.reward-art svg.alien'), 'alien reward shown');
+  ok(!!byText('.result-btns a', 'לרמה 2'), 'next-level button offered');
+  byText('.result-btns a', 'חזרה לכוכב').click();
+  await tick();
+  ok($$('.node.locked').length === 7, 'second station unlocked');
+  ok($('.node small').textContent === '★☆☆', 'station shows its star');
+  location.hash = '#/play/frac/5/1';
+  await tick();
+  ok(!$('.play') && !!$('.path'), 'locked challenge cannot be opened by URL');
+  location.hash = '#/station';
+  await tick();
+  ok($$('svg.alien:not(.locked)').length === 1, 'station shows one freed alien');
+  location.hash = '#/parents';
+  await tick();
+  ok($('.ptable tbody tr').textContent.includes('80%'), 'parents page shows 80% accuracy');
+  location.hash = '';
+  await tick();
+  ok(!$('.modal'), 'story not shown again');
+  ok($('.total').textContent.includes('1 /'), 'map total: ' + $('.total').textContent.trim());
+} catch (e) {
+  log.push('CRASH ' + e.message + '\n' + e.stack);
+}
+out.textContent = log.join('\n');
+</script>
+</html>

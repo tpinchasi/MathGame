@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>phone frame</title>
+<body style="margin:0;background:#444">
+<script>
+// Shows the game inside a phone-sized iframe: frame.html?w=390&h=780&r=%23/play/frac/0/1
+const q = new URLSearchParams(location.search);
+const f = document.createElement('iframe');
+f.width = q.get('w') || 390;
+f.height = q.get('h') || 780;
+f.style.border = 0;
+f.src = '../public/index.html?dev' + (q.get('r') || '');
+document.body.append(f);
+</script>

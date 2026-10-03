@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<meta charset="utf-8">
+<title>generator self-test</title>
+<link rel="stylesheet" href="../public/css/style.css">
+<pre id="out" dir="ltr">running…</pre>
+<div id="sandbox" style="position:absolute;left:-9999px"></div>
+<script type="module">
+// Generates every challenge at every level many times and checks that each round's own
+// answer passes its own check after a round trip through the widget.
+const out = document.getElementById('out'), sandbox = document.getElementById('sandbox');
+const log = [];
+try {
+  const { WORLDS } = await import('../public/js/worlds/index.js');
+  const N = +new URLSearchParams(location.search).get('n') || 60;
+  let rounds = 0, bad = 0;
+  for (const w of WORLDS) {
+    if (w.challenges.length !== 9) log.push(`WORLD ${w.id}: ${w.challenges.length} challenges`);
+    for (const ch of w.challenges) {
+      if (!ch.intro) log.push(`NO INTRO ${ch.id}`);
+      for (const L of [1, 2, 3]) {
+        const t0 = performance.now(), sigs = new Set();
+        let errs = 0;
+        for (let i = 0; i < N; i++) {
+          rounds++;
+          try {
+            const r = ch.gen(L);
+            sigs.add(r.prompt + (r.visual || '') + (typeof r.widget === 'function' ? r.sig || '' : r.widget.el.textContent) + JSON.stringify(r.answer || ''));
+            if (!r.prompt || !r.hints || r.hints.length < 1 || !r.explain) throw new Error('missing prompt/hints/explain');
+            if (/undefined|NaN|null|\[object/.test(r.prompt + (r.visual || '') + r.hints.join(' ') + r.explain)) throw new Error('bad text: ' + (r.prompt + ' | ' + r.hints.join(' | ') + ' | ' + r.explain).replace(/<[^>]+>/g, ' ').slice(0, 300));
+            let solved = false, mistakes = 0;
+            const self = typeof r.widget === 'function';
+            const wd = self ? r.widget({ solved: () => (solved = true), mistake: () => mistakes++ }) : r.widget;
+            sandbox.innerHTML = '';
+            sandbox.append(wd.el);
+            if (self) {
+              if (!wd.auto) throw new Error('self widget without auto()');
+              wd.auto();
+              if (!solved || mistakes) throw new Error(`auto() solved=${solved} mistakes=${mistakes}`);
+            } else {
+              if (r.answer == null) throw new Error('no answer');
+              if (wd.value() != null && r.check(wd.value())) throw new Error('empty widget passes check');
+              wd.set(r.answer);
+              const v = wd.value();
+              if (v == null) throw new Error('value null after set');
+              if (!r.check(v)) throw new Error('answer fails check: ' + JSON.stringify(r.answer) + ' :: ' + r.prompt.replace(/<[^>]+>/g, ' ').slice(0, 200));
+            }
+          } catch (e) {
+            errs++;
+            bad++;
+            if (errs <= 2) log.push(`FAIL ${ch.id} L${L}: ${e.message}`);
+          }
+        }
+        const ms = Math.round(performance.now() - t0);
+        if (sigs.size < 6) log.push(`LOW VARIETY ${ch.id} L${L}: ${sigs.size} distinct of ${N}`);
+        if (ms > 1500) log.push(`SLOW ${ch.id} L${L}: ${ms}ms for ${N}`);
+      }
+    }
+  }
+  log.unshift(`RESULT worlds=${WORLDS.length} rounds=${rounds} failures=${bad}`);
+} catch (e) {
+  log.unshift('CRASH ' + e.message + '\n' + e.stack);
+}
+out.textContent = log.join('\n');
+document.title = 'done';
+</script>
+</html>

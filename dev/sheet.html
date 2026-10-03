@@ -1,0 +1,16 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>contact sheet</title>
+<body style="margin:0;background:#333;display:flex;flex-wrap:wrap;gap:6px">
+<script>
+// Several phone-sized views side by side: sheet.html?r=order/0/1,order/3/2,...
+const q = new URLSearchParams(location.search);
+for (const r of (q.get('r') || '').split(',')) {
+  const f = document.createElement('iframe');
+  f.width = q.get('w') || 390;
+  f.height = q.get('h') || 640;
+  f.style.border = 0;
+  f.src = '../public/index.html?dev#/play/' + r;
+  document.body.append(f);
+}
+</script>
