@@ -81,10 +81,13 @@ jobs:
             sleep 2
             adb exec-out screencap -p > screen-3-planet.png
             adb shell am force-stop io.github.tpinchasi.nekamat
+            sleep 5
             adb shell am start -W -n io.github.tpinchasi.nekamat/.MainActivity
             sleep 10
             adb exec-out screencap -p > screen-4-relaunch.png
-            adb logcat -d -v brief chromium:V AndroidRuntime:E '*:S' > logcat.txt
+            adb shell dumpsys activity activities | grep -E "ResumedActivity|nekamat" > activity.txt || true
+            adb shell pidof io.github.tpinchasi.nekamat > pid.txt || true
+            adb logcat -d -v brief chromium:V AndroidRuntime:E ActivityTaskManager:I ActivityManager:I DEBUG:E libc:E '*:S' > logcat.txt
             adb shell dumpsys package io.github.tpinchasi.nekamat | grep -E "versionName|requested permissions|install permissions" > package.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
@@ -94,3 +97,5 @@ jobs:
             screen-*.png
             logcat.txt
             package.txt
+            activity.txt
+            pid.txt
