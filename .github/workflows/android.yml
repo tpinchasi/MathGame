@@ -55,9 +55,13 @@ jobs:
           path: nekamat-hacheshbonaim.aab
 
   smoke:
-    name: Launch on an emulator
+    name: Launch on an emulator (Android API ${{ matrix.api }})
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [34, 36]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -67,12 +71,12 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      # The taps (Pixel 6 coordinates) dismiss the opening story and open the first planet; the back
-      # key must return to the map; the relaunch shows whether progress survived, i.e. the story
-      # must not appear again.
+      # First launch right after install is watched for 90 seconds. Then the taps (Pixel 6
+      # coordinates) dismiss the opening story and open the first planet; the back key must return
+      # to the map; the relaunch shows whether progress survived (the story must not appear again).
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 36
+          api-level: ${{ matrix.api }}
           arch: x86_64
           target: google_apis
           profile: pixel_6
@@ -80,8 +84,16 @@ jobs:
           script: |
             adb install nekamat-hacheshbonaim.apk
             adb shell am start -W -n io.github.tpinchasi.nekamat/.MainActivity
-            sleep 25
-            adb exec-out screencap -p > screen-1-first-launch.png
+            sleep 5
+            adb exec-out screencap -p > screen-1a-first-launch-05s.png
+            sleep 10
+            adb exec-out screencap -p > screen-1b-first-launch-15s.png
+            sleep 15
+            adb exec-out screencap -p > screen-1c-first-launch-30s.png
+            sleep 30
+            adb exec-out screencap -p > screen-1d-first-launch-60s.png
+            sleep 30
+            adb exec-out screencap -p > screen-1e-first-launch-90s.png
             adb shell input tap 540 1698
             sleep 2
             adb exec-out screencap -p > screen-2-after-story.png
@@ -98,15 +110,17 @@ jobs:
             adb exec-out screencap -p > screen-5-relaunch.png
             adb shell dumpsys activity activities | grep -E "ResumedActivity|nekamat" > activity.txt || true
             adb shell pidof io.github.tpinchasi.nekamat > pid.txt || true
-            adb logcat -d -v brief chromium:V AndroidRuntime:E ActivityTaskManager:I ActivityManager:I DEBUG:E libc:E '*:S' > logcat.txt
+            adb logcat -d -v time > logcat.txt
             adb shell dumpsys package io.github.tpinchasi.nekamat | grep -E "versionName|requested permissions|install permissions" > package.txt || true
+            adb shell dumpsys webviewupdate | head -20 > webview.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: emulator-smoke
+          name: emulator-smoke-api${{ matrix.api }}
           path: |
             screen-*.png
             logcat.txt
             package.txt
             activity.txt
             pid.txt
+            webview.txt
