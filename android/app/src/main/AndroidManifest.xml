@@ -10,6 +10,15 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- The WebView only ever shows the bundled game, so the Google lookups it would
+             otherwise make (Safe Browsing checks, usage metrics) are switched off. -->
+        <meta-data
+            android:name="android.webkit.WebView.EnableSafeBrowsing"
+            android:value="false" />
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
+            android:value="true" />
+
         <!-- configChanges: rotating the screen must not restart the game mid-question -->
         <activity
             android:name=".MainActivity"

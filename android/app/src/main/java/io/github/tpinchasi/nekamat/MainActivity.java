@@ -3,9 +3,15 @@ package io.github.tpinchasi.nekamat;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Build;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.webkit.ConsoleMessage;
+import android.webkit.RenderProcessGoneDetail;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -17,6 +23,7 @@ import android.window.OnBackInvokedDispatcher;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 
 /** Shows the game, which is bundled in the app's assets, in a full-window WebView. */
@@ -25,6 +32,7 @@ public class MainActivity extends Activity {
     // exactly this use), so ES modules and localStorage behave as on a real site.
     private static final String HOST = "appassets.androidplatform.net";
     private static final int SPACE = 0xFF0B1030;
+    private static final String TAG = "Nekamat";
 
     private WebView web;
 
@@ -49,6 +57,7 @@ public class MainActivity extends Activity {
                 if (!HOST.equals(url.getHost())) return notFound();
                 String path = url.getPath();
                 if (path == null || path.isEmpty() || path.equals("/")) path = "/index.html";
+                Log.i(TAG, "serve " + path);
                 try {
                     InputStream in = getAssets().open(path.substring(1));
                     String type = mimeType(path);
@@ -62,7 +71,36 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !HOST.equals(request.getUrl().getHost()); // never leave the game
             }
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                Log.i(TAG, "page started " + url);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                Log.i(TAG, "page finished " + url + ", view " + view.getWidth() + "x" + view.getHeight());
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                Log.w(TAG, "load error " + error.getErrorCode() + " " + error.getDescription() + " for " + request.getUrl());
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                Log.e(TAG, "renderer gone, crashed=" + detail.didCrash());
+                return false;
+            }
         });
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage message) {
+                Log.i(TAG, "console " + message.messageLevel() + ": " + message.message() + " (" + message.sourceId() + ":" + message.lineNumber() + ")");
+                return true;
+            }
+        });
+        web.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> Log.i(TAG, "webview laid out " + (r - l) + "x" + (b - t)));
 
         // From Android 15 the window is drawn edge to edge. The game is kept clear of the
         // system bars and screen cutouts, and the space colour shows behind them.
@@ -73,6 +111,7 @@ public class MainActivity extends Activity {
             int[] p = Build.VERSION.SDK_INT >= 30 ? Api30.barInsets(insets) : new int[] {
                     insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
                     insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom()};
+            Log.i(TAG, "insets " + Arrays.toString(p));
             view.setPadding(p[0], p[1], p[2], p[3]);
             return insets;
         });
