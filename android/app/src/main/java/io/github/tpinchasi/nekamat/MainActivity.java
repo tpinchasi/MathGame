@@ -1,9 +1,7 @@
 package io.github.tpinchasi.nekamat;
 
 import android.app.Activity;
-import android.net.Uri;
 import android.os.Build;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -23,7 +21,6 @@ import android.window.OnBackInvokedDispatcher;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collections;
 
 /** Shows the game, which is bundled in the app's assets, in a full-window WebView. */
@@ -31,10 +28,13 @@ public class MainActivity extends Activity {
     // The assets are served to the WebView under this https address (reserved by Google for
     // exactly this use), so ES modules and localStorage behave as on a real site.
     private static final String HOST = "appassets.androidplatform.net";
+    private static final String START = "https://" + HOST + "/index.html";
     private static final int SPACE = 0xFF0B1030;
     private static final String TAG = "Nekamat";
 
+    private FrameLayout root;
     private WebView web;
+    private boolean rendererGone;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -53,11 +53,9 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                Uri url = request.getUrl();
-                if (!HOST.equals(url.getHost())) return notFound();
-                String path = url.getPath();
+                if (!HOST.equals(request.getUrl().getHost())) return notFound();
+                String path = request.getUrl().getPath();
                 if (path == null || path.isEmpty() || path.equals("/")) path = "/index.html";
-                Log.i(TAG, "serve " + path);
                 try {
                     InputStream in = getAssets().open(path.substring(1));
                     String type = mimeType(path);
@@ -73,53 +71,48 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                Log.i(TAG, "page started " + url);
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                Log.i(TAG, "page finished " + url + ", view " + view.getWidth() + "x" + view.getHeight());
-            }
-
-            @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                Log.w(TAG, "load error " + error.getErrorCode() + " " + error.getDescription() + " for " + request.getUrl());
+                if (request.isForMainFrame()) Log.w(TAG, "load error " + error.getErrorCode() + " " + error.getDescription());
             }
 
+            // The system may kill the page's process to free memory. Start over with a fresh
+            // WebView instead of crashing; progress is safe in localStorage.
             @Override
             public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
-                Log.e(TAG, "renderer gone, crashed=" + detail.didCrash());
-                return false;
+                Log.w(TAG, "page process gone, crashed=" + detail.didCrash());
+                rendererGone = true;
+                recreate();
+                return true;
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage message) {
-                Log.i(TAG, "console " + message.messageLevel() + ": " + message.message() + " (" + message.sourceId() + ":" + message.lineNumber() + ")");
+                if (message.messageLevel() == ConsoleMessage.MessageLevel.ERROR)
+                    Log.w(TAG, "page error: " + message.message() + " (" + message.sourceId() + ":" + message.lineNumber() + ")");
                 return true;
             }
         });
-        web.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> Log.i(TAG, "webview laid out " + (r - l) + "x" + (b - t)));
 
         // From Android 15 the window is drawn edge to edge. The game is kept clear of the
         // system bars and screen cutouts, and the space colour shows behind them.
-        FrameLayout root = new FrameLayout(this);
+        root = new FrameLayout(this);
         root.setBackgroundColor(SPACE);
         root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         root.setOnApplyWindowInsetsListener((view, insets) -> {
             int[] p = Build.VERSION.SDK_INT >= 30 ? Api30.barInsets(insets) : new int[] {
                     insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
                     insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom()};
-            Log.i(TAG, "insets " + Arrays.toString(p));
             view.setPadding(p[0], p[1], p[2], p[3]);
             return insets;
         });
         setContentView(root);
         if (Build.VERSION.SDK_INT >= 33) Api33.handleBack(this);
 
-        if (state == null) web.loadUrl("https://" + HOST + "/index.html");
-        else web.restoreState(state);
+        // After the system rebuilds the activity, return to the screen the player was on. If
+        // nothing was saved yet (rebuilt before the first page finished loading), start afresh;
+        // restoring an empty state would leave a blank page.
+        if (state == null || web.restoreState(state) == null) web.loadUrl(START);
     }
 
     private static WebResourceResponse notFound() {
@@ -151,24 +144,10 @@ public class MainActivity extends Activity {
         back();
     }
 
-    // Newer platform classes are kept in their own holders so older devices never load them.
-    private static final class Api30 {
-        static int[] barInsets(WindowInsets insets) {
-            android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-            return new int[] {i.left, i.top, i.right, i.bottom};
-        }
-    }
-
-    private static final class Api33 {
-        static void handleBack(MainActivity activity) {
-            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, activity::back);
-        }
-    }
-
     @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
-        web.saveState(out);
+        if (!rendererGone) web.saveState(out);
     }
 
     @Override
@@ -181,5 +160,27 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         web.onResume();
+    }
+
+    // A rebuilt activity gets a new WebView; the old one must not keep loading in the background.
+    @Override
+    protected void onDestroy() {
+        root.removeView(web);
+        web.destroy();
+        super.onDestroy();
+    }
+
+    // Newer platform classes are kept in their own holders so older devices never load them.
+    private static final class Api30 {
+        static int[] barInsets(WindowInsets insets) {
+            android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            return new int[] {i.left, i.top, i.right, i.bottom};
+        }
+    }
+
+    private static final class Api33 {
+        static void handleBack(MainActivity activity) {
+            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, activity::back);
+        }
     }
 }

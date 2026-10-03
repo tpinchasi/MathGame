@@ -19,10 +19,11 @@
             android:name="android.webkit.WebView.MetricsOptOut"
             android:value="true" />
 
-        <!-- configChanges: rotating the screen must not restart the game mid-question -->
+        <!-- configChanges: rotating the screen, switching to dark mode and the like must not
+             restart the game mid-question. The page adapts by itself. -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode"
+            android:configChanges="mcc|mnc|locale|layoutDirection|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|density|fontScale|fontWeightAdjustment|grammaticalGender|uiMode|colorMode"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
