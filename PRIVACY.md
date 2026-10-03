@@ -31,7 +31,7 @@
 
 ## יצירת קשר
 
-לשאלות בנושא פרטיות אפשר לפתוח פנייה בכתובת https://github.com/tpinchasi/MathGame/issues
+לשאלות בנושא פרטיות אפשר לכתוב אל tomer.pinchassi@gmail.com
 
 ---
 
@@ -68,4 +68,4 @@ If this policy changes, the updated version will be published on this page with 
 
 ## Contact
 
-For privacy questions, open an issue at https://github.com/tpinchasi/MathGame/issues
+For privacy questions, write to tomer.pinchassi@gmail.com
