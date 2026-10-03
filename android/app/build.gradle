@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+// The release key lives outside the repository. CI restores it from repository secrets;
+// without it the build falls back to the throwaway debug key (fine for trying, not for updates).
+def keystore = System.getenv('ANDROID_KEYSTORE_FILE')
+
+android {
+    namespace 'io.github.tpinchasi.nekamat'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'io.github.tpinchasi.nekamat'
+        minSdk 26
+        targetSdk 34
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
+        versionName '1.0'
+    }
+
+    // The game itself is the web app in /public, packaged as-is.
+    sourceSets {
+        main {
+            assets.srcDirs = ['../../public']
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storeType 'pkcs12'
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias 'nekamat'
+                keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig keystore ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds false
+    }
+}

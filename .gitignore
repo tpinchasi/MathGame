@@ -1,3 +1,7 @@
 tunnel.log
 __pycache__/
 .DS_Store
+android/.gradle/
+android/build/
+android/app/build/
+dist/
