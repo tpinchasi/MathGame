@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No permissions at all: the game is bundled in the app and never touches the network. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <!-- The WebView only ever shows the bundled game, so the Google lookups it would
+             otherwise make (Safe Browsing checks, usage metrics) are switched off. -->
+        <meta-data
+            android:name="android.webkit.WebView.EnableSafeBrowsing"
+            android:value="false" />
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
+            android:value="true" />
+
+        <!-- configChanges: rotating the screen, switching to dark mode and the like must not
+             restart the game mid-question. The page adapts by itself. -->
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="mcc|mnc|locale|layoutDirection|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|density|fontScale|fontWeightAdjustment|grammaticalGender|uiMode|colorMode"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
