@@ -8,12 +8,12 @@ def keystore = System.getenv('ANDROID_KEYSTORE_FILE')
 
 android {
     namespace 'io.github.tpinchasi.nekamat'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId 'io.github.tpinchasi.nekamat'
         minSdk 26
-        targetSdk 34
+        targetSdk 36
         versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
         versionName '1.0'
     }

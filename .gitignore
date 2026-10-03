@@ -5,3 +5,4 @@ android/.gradle/
 android/build/
 android/app/build/
 dist/
+public/download/

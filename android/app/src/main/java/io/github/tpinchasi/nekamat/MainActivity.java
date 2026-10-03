@@ -2,12 +2,17 @@ package io.github.tpinchasi.nekamat;
 
 import android.app.Activity;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
+import android.window.OnBackInvokedDispatcher;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -19,6 +24,7 @@ public class MainActivity extends Activity {
     // The assets are served to the WebView under this https address (reserved by Google for
     // exactly this use), so ES modules and localStorage behave as on a real site.
     private static final String HOST = "appassets.androidplatform.net";
+    private static final int SPACE = 0xFF0B1030;
 
     private WebView web;
 
@@ -26,7 +32,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         web = new WebView(this);
-        web.setBackgroundColor(0xFF0B1030);
+        web.setBackgroundColor(SPACE);
 
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -58,7 +64,21 @@ public class MainActivity extends Activity {
             }
         });
 
-        setContentView(web);
+        // From Android 15 the window is drawn edge to edge. The game is kept clear of the
+        // system bars and screen cutouts, and the space colour shows behind them.
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(SPACE);
+        root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int[] p = Build.VERSION.SDK_INT >= 30 ? Api30.barInsets(insets) : new int[] {
+                    insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
+                    insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom()};
+            view.setPadding(p[0], p[1], p[2], p[3]);
+            return insets;
+        });
+        setContentView(root);
+        if (Build.VERSION.SDK_INT >= 33) Api33.handleBack(this);
+
         if (state == null) web.loadUrl("https://" + HOST + "/index.html");
         else web.restoreState(state);
     }
@@ -81,10 +101,29 @@ public class MainActivity extends Activity {
     }
 
     // The back button walks back through the game's screens before leaving the app.
+    private void back() {
+        if (web.canGoBack()) web.goBack();
+        else finish();
+    }
+
+    // Android 12 and older; newer versions use the callback registered in Api33.
     @Override
     public void onBackPressed() {
-        if (web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+        back();
+    }
+
+    // Newer platform classes are kept in their own holders so older devices never load them.
+    private static final class Api30 {
+        static int[] barInsets(WindowInsets insets) {
+            android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            return new int[] {i.left, i.top, i.right, i.bottom};
+        }
+    }
+
+    private static final class Api33 {
+        static void handleBack(MainActivity activity) {
+            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, activity::back);
+        }
     }
 
     @Override
