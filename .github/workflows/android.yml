@@ -28,7 +28,7 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.14.3'
+          gradle-version: '9.6.0'
       - name: Restore the signing key
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
@@ -72,12 +72,13 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       # What the script checks, by screenshot (taps use Pixel 6 coordinates):
-      #  1. first launch right after install shows the game
-      #  2. a tap dismisses the opening story, 3. another opens the first planet
+      #  1. first launch right after install shows the grade picker
+      #  2. a tap on the middle card (grades 4–5) opens the space game and its story,
+      #     a second tap dismisses the story, 3. a third opens the first planet
       #  3b. with "don't keep activities" on, leaving and returning rebuilds the activity and
       #      must come back to the same planet
       #  4. the back key returns to the map
-      #  5. after a force-stop the story must not appear again (progress was saved)
+      #  5. after a force-stop the app reopens on the space map without the story (progress was saved)
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -92,10 +93,13 @@ jobs:
             adb exec-out screencap -p > screen-1a-first-launch-05s.png
             sleep 15
             adb exec-out screencap -p > screen-1b-first-launch-20s.png
+            adb shell input tap 540 1000
+            sleep 2
+            adb exec-out screencap -p > screen-2a-story.png
             adb shell input tap 540 1698
             sleep 2
-            adb exec-out screencap -p > screen-2-after-story.png
-            adb shell input tap 798 576
+            adb exec-out screencap -p > screen-2b-after-story.png
+            adb shell input tap 798 760
             sleep 2
             adb exec-out screencap -p > screen-3-planet.png
             adb shell settings put global always_finish_activities 1
