@@ -6,7 +6,7 @@ usage: python3 dev/cdp.py <script.py>   -- the script gets `page` (see Page belo
 import base64, json, os, socket, struct, subprocess, sys, tempfile, time, urllib.request
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-PORT = 9333
+PORT = int(os.environ.get("CDP_PORT", "9333"))
 
 
 class WS:
@@ -122,6 +122,7 @@ def main():
         page = Page(WS([t for t in tabs if t["type"] == "page"][0]["webSocketDebuggerUrl"]))
         page.cmd("Page.enable")
         page.cmd("Runtime.enable")
+        page.cmd("Network.enable")
         exec(open(sys.argv[1]).read(), {"page": page, "time": time, "json": json, "SHOTS": os.environ.get("SHOT_DIR", tempfile.gettempdir())})
         for line in page.logs:
             print(line)

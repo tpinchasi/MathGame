@@ -1,8 +1,8 @@
 // כוכב השברים
-import { rnd, pick, gcd, lcm, M, fr, F, MX, showFrac } from '../util.js';
-import { inputs, box, choice, fracBuilder, numLine, lineSVG } from '../widgets.js';
-import { num, fracAns } from '../kit.js';
-import { pies, areaModel } from '../visuals.js';
+import { rnd, pick, gcd, lcm, M, fr, F, MX, showFrac } from '../../util.js';
+import { inputs, box, choice, fracBuilder, numLine, lineSVG } from '../../widgets.js';
+import { num, fracAns } from '../../kit.js';
+import { pies, areaModel } from '../../visuals.js';
 
 // random proper fraction in lowest terms
 const red = (max, min = 2) => {
