@@ -1,9 +1,9 @@
 // כוכב הריבועים
-import { rnd, pick, shuffle, range, M } from '../util.js';
-import { genExpr, tokHTML, chainHTML } from '../expr.js';
-import { inputs, box, choice, gridPaint, rectOf, exprTap } from '../widgets.js';
-import { num, nums } from '../kit.js';
-import { gridShape, squareArea, gnomon, cuboid } from '../visuals.js';
+import { rnd, pick, shuffle, range, M } from '../../util.js';
+import { genExpr, tokHTML, chainHTML } from '../../expr.js';
+import { inputs, box, choice, gridPaint, rectOf, exprTap } from '../../widgets.js';
+import { num, nums } from '../../kit.js';
+import { gridShape, squareArea, gnomon, cuboid } from '../../visuals.js';
 
 const sq = n => n * n;
 const P = (b, e = 2) => `${b}<sup>${e}</sup>`;

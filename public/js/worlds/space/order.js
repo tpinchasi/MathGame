@@ -1,8 +1,8 @@
 // כוכב סדר הפעולות
-import { rnd, pick, shuffle, range, M, SYM } from '../util.js';
-import { genExpr, hasBoth, build, steps, value, evalTokens, same, tokHTML, chainHTML, validOps, applyOp, nextOp, calc } from '../expr.js';
-import { inputs, box, choice, exprTap, parenPlace, opFill, fillOps, targetBuilder } from '../widgets.js';
-import { num } from '../kit.js';
+import { rnd, pick, shuffle, range, M, SYM } from '../../util.js';
+import { genExpr, hasBoth, build, steps, value, evalTokens, same, tokHTML, chainHTML, validOps, applyOp, nextOp, calc } from '../../expr.js';
+import { inputs, box, choice, exprTap, parenPlace, opFill, fillOps, targetBuilder } from '../../widgets.js';
+import { num } from '../../kit.js';
 
 const show = T => `<div class="expr" dir="ltr">${tokHTML(T)}</div>`;
 const inline = (T, val) => M(`${tokHTML(T)}${val == null ? '' : ` = ${val}`}`);

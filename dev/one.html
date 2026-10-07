@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>one world</title>
+<link rel="stylesheet" href="../public/css/style.css">
+<body>
+<div id="stars"></div>
+<main id="app"><div class="play" id="root"></div></main>
+<script type="module">
+// Plays one challenge of one world file in the real engine, without the rest of the app,
+// so a world can be looked at while other world files are still being written.
+// usage: one.html?file=zoo/add.js#<challenge index>/<level>
+const file = new URLSearchParams(location.search).get('file');
+document.body.dataset.theme = file.split('/')[0];
+const [{ default: world }, { play }] = await Promise.all([import('../public/js/worlds/' + file), import('../public/js/engine.js')]);
+window.world = world;
+window.play = play;
+let stop = null;
+function show() {
+  const [i, L] = location.hash.slice(1).split('/').map(Number);
+  if (stop) stop();
+  window.scrollTo(0, 0);
+  const root = document.getElementById('root');
+  stop = play(root, { ch: world.challenges[i || 0], level: L || 1, onExit() {}, onDone() { root.innerHTML = '<p>done</p>'; }, onHelp() {} });
+}
+addEventListener('hashchange', show);
+show();
+document.title = 'ready';
+</script>
