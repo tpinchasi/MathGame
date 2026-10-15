@@ -11,12 +11,17 @@
 const out = document.getElementById('out'), sandbox = document.getElementById('sandbox');
 const log = [];
 try {
-  const { WORLDS } = await import('../public/js/worlds/index.js');
-  const N = +new URLSearchParams(location.search).get('n') || 60;
+  // ?file=zoo/add.js tests one world file on its own; otherwise every world of every game.
+  const q = new URLSearchParams(location.search), file = q.get('file');
+  const WORLDS = file ? [(await import('../public/js/worlds/' + file)).default]
+    : (await Promise.all(['space', 'zoo', 'lab'].map(g => import(`../public/js/worlds/${g}/index.js`)))).flatMap(m => m.WORLDS);
+  const N = +q.get('n') || 60, ids = new Set();
   let rounds = 0, bad = 0;
   for (const w of WORLDS) {
     if (w.challenges.length !== 9) log.push(`WORLD ${w.id}: ${w.challenges.length} challenges`);
     for (const ch of w.challenges) {
+      if (ids.has(ch.id)) log.push(`DUPLICATE ID ${ch.id}`);
+      ids.add(ch.id);
       if (!ch.intro) log.push(`NO INTRO ${ch.id}`);
       for (const L of [1, 2, 3]) {
         const t0 = performance.now(), sigs = new Set();

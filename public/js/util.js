@@ -13,7 +13,15 @@ export function shuffle(arr) {
   return a;
 }
 
+// Decimal results: compare with a tolerance and print without floating-point noise (0.1 + 0.2 → 0.3).
+export const near = (a, b) => Math.abs(a - b) < 1e-9;
+export const nf = x => String(Math.round(x * 1e9) / 1e9).replace('-', '−');
+
 export const SYM = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+
+// Browsers may break a line right after a maqaf, leaving "ל־" at the end of one line and its number
+// on the next. A word joiner after every maqaf that isn't followed by a space keeps them together.
+export const glue = html => html.replace(/־(?![\s\u2060])/g, '־\u2060');
 
 // Math inside Hebrew text is always isolated as left-to-right.
 export const M = s => `<span class="m" dir="ltr">${s}</span>`;

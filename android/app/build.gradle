@@ -38,8 +38,12 @@ android {
     }
 
     buildTypes {
+        // R8 shrinks, optimises and renames the app's code; Play recommends it. The only class the
+        // system looks up by name is MainActivity, and the manifest already keeps it.
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             signingConfig keystore ? signingConfigs.release : signingConfigs.debug
         }
     }

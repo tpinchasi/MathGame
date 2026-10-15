@@ -2,10 +2,15 @@
 import { gcd, M } from './util.js';
 import { inputs, box, fbox } from './widgets.js';
 
-// One whole-number answer.
+// A prefix that is pure maths ("√484 =") is kept left to right together with the box;
+// Hebrew words ("בסך הכול:") stay right to left.
+const hebrew = s => /[\u0590-\u05FF]/.test(s.replace(/<[^>]*>/g, ''));
+const lead = (pre, b) => (!pre ? b : hebrew(pre) ? pre + b : M(pre + b));
+
+// One whole-number answer. `post` is usually a Hebrew unit after the box.
 export const num = ({ prompt, visual, answer, pre = '', post = '', hints, explain, tries, wrongMsg }) => ({
   prompt, visual, hints, explain, tries, wrongMsg,
-  widget: inputs(`<div class="ans-line">${pre}${box('a', String(answer).length + 1)}${post}</div>`),
+  widget: inputs(`<div class="ans-line">${lead(pre, box('a', String(answer).length + 1))}${post}</div>`),
   answer: { a: answer },
   check: v => v.a === answer,
 });

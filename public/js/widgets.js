@@ -4,11 +4,12 @@
 import { h, SYM, M } from './util.js';
 import { validOps, applyOp, nextOp, calc, tokHTML } from './expr.js';
 
-export const box = (key, len = 3, opt = false) =>
-  `<b class="inbox" data-key="${key}" data-len="${len}"${opt ? ' data-opt="1"' : ''}></b>`;
+// kind: 'd' allows a decimal point, 'n' a minus sign, 'dn' both. len counts those signs too.
+export const box = (key, len = 3, opt = false, kind = '') =>
+  `<b class="inbox" data-key="${key}" data-len="${len}"${opt ? ' data-opt="1"' : ''}${kind ? ` data-kind="${kind}"` : ''}></b>`;
 export const fbox = (n = 'n', d = 'd', len = 3) => `<span class="frac fin">${box(n, len)}${box(d, len)}</span>`;
 
-function keypad(type, multi, onOk) {
+function keypad(type, multi, onOk, { dec = false, neg = false } = {}) {
   const kp = h('div', { class: 'keypad', dir: 'ltr' });
   const key = (label, k, cls, aria) =>
     h('button', { type: 'button', class: cls, 'aria-label': aria, onclick: () => (typeof k === 'function' ? k() : type(k)) }, label);
@@ -17,6 +18,8 @@ function keypad(type, multi, onOk) {
   for (const k of '67890') kp.append(key(k, k));
   if (onOk) kp.append(key('✓', onOk, 'k-fn k-ok', 'אישור'));
   else if (multi) kp.append(key('⇥', 'next', 'k-fn', 'התיבה הבאה'));
+  if (dec) kp.append(key('.', '.', 'k-fn k-wide', 'נקודה עשרונית'));
+  if (neg) kp.append(key('−', '-', 'k-fn k-wide', 'סימן מינוס'));
   return kp;
 }
 
@@ -25,6 +28,7 @@ export function inputs(html, { onOk } = {}) {
   const body = h('div', { class: 'w-body', html });
   const boxes = [...body.querySelectorAll('.inbox')];
   const vals = boxes.map(() => '');
+  const kinds = boxes.map(b => b.dataset.kind || '');
   let cur = 0, locked = false;
   const paint = () =>
     boxes.forEach((b, i) => {
@@ -38,7 +42,11 @@ export function inputs(html, { onOk } = {}) {
       if (!vals[cur] && cur > 0) cur--;
       vals[cur] = vals[cur].slice(0, -1);
     } else if (k === 'next') cur = (cur + 1) % boxes.length;
-    else if (len === 1) {
+    else if (k === '.') {
+      if (kinds[cur].includes('d') && !vals[cur].includes('.') && vals[cur].length < len) vals[cur] += '.';
+    } else if (k === '-') {
+      if (kinds[cur].includes('n')) vals[cur] = vals[cur].startsWith('−') ? vals[cur].slice(1) : '−' + vals[cur];
+    } else if (len === 1) {
       vals[cur] = k;
       const nx = vals.findIndex((v, i) => i > cur && v === '');
       if (nx >= 0) cur = nx;
@@ -53,7 +61,7 @@ export function inputs(html, { onOk } = {}) {
       paint();
     })
   );
-  const el = h('div', { class: 'w-inputs' }, body, keypad(type, boxes.length > 1, onOk));
+  const el = h('div', { class: 'w-inputs' }, body, keypad(type, boxes.length > 1, onOk, { dec: kinds.some(k => k.includes('d')), neg: kinds.some(k => k.includes('n')) }));
   paint();
   return {
     el,
@@ -62,12 +70,14 @@ export function inputs(html, { onOk } = {}) {
       for (let i = 0; i < boxes.length; i++) {
         const d = boxes[i].dataset;
         if (vals[i] === '' && !d.opt) return null;
-        o[d.key] = +vals[i];
+        const v = Number(vals[i].replace('−', '-'));
+        if (vals[i] !== '' && !Number.isFinite(v)) return null; // a lone '.' or '−'
+        o[d.key] = v;
       }
       return o;
     },
     set(a) {
-      boxes.forEach((b, i) => (vals[i] = a[b.dataset.key] != null ? String(a[b.dataset.key]) : ''));
+      boxes.forEach((b, i) => (vals[i] = a[b.dataset.key] != null ? String(a[b.dataset.key]).replace('-', '−') : ''));
       paint();
     },
     clear() {
@@ -76,7 +86,7 @@ export function inputs(html, { onOk } = {}) {
       paint();
     },
     key(e) {
-      if (/^\d$/.test(e.key)) type(e.key);
+      if (/^\d$/.test(e.key) || e.key === '.' || e.key === '-') type(e.key);
       else if (e.key === 'Backspace') type('del');
       else if (e.key === 'Tab' || e.key === ' ') type('next');
       else if (e.key === 'Enter') {
@@ -189,7 +199,12 @@ export function lineSVG({ max, div, mark = null, hits = false }) {
     if (major) s += `<text x="${x(k)}" y="94" class="tlabel">${k / div}</text>`;
   }
   if (mark != null) s += `<g transform="translate(${x(mark)} 52)" class="marker"><path d="M0 -12L-9 -30L9 -30Z"/><circle r="9"/></g>`;
-  if (hits) for (let k = 0; k <= n; k++) s += `<rect data-k="${k}" x="${x(k) - 290 / n}" y="4" width="${580 / n}" height="92" class="hit"/>`;
+  // tap zones reach halfway to the next tick, but never past the picture's edges
+  if (hits)
+    for (let k = 0; k <= n; k++) {
+      const l = Math.max(0, x(k) - 290 / n), r = Math.min(640, x(k) + 290 / n);
+      s += `<rect data-k="${k}" x="${l.toFixed(1)}" y="4" width="${(r - l).toFixed(1)}" height="92" class="hit"/>`;
+    }
   return s + '</svg>';
 }
 

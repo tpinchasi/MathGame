@@ -1,8 +1,8 @@
 // כוכב הצורות
-import { rnd, pick, shuffle, range, M } from '../util.js';
-import { choice, gridPaint, rectOf, perimOf, connected, angleAim } from '../widgets.js';
-import { num, nums } from '../kit.js';
-import { gridShape, triangle, triangleSides, quadAngles, aroundPoint, quadShape, cuboid } from '../visuals.js';
+import { rnd, pick, shuffle, range, M } from '../../util.js';
+import { choice, gridPaint, rectOf, perimOf, connected, angleAim } from '../../widgets.js';
+import { num, nums } from '../../kit.js';
+import { gridShape, triangle, triangleSides, quadAngles, aroundPoint, quadShape, cuboid } from '../../visuals.js';
 
 const five = (a, b) => rnd(a / 5, b / 5) * 5;
 const cells = (rows, cols, r0 = 0, c0 = 0) => range(rows * cols, i => `${r0 + Math.floor(i / cols)},${c0 + (i % cols)}`);

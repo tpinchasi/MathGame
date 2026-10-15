@@ -3,7 +3,7 @@
 # script errors, empty screens and content wider than the screen.
 page.phone()
 page.goto("http://127.0.0.1:8787/?dev")
-worlds = json.loads(page.js("import('/js/worlds/index.js').then(m => JSON.stringify(m.WORLDS.map(w => [w.id, w.challenges.length])))"))
+worlds = json.loads(page.js("import('/js/games.js').then(m => JSON.stringify(m.GAMES.flatMap(g => g.worlds).map(w => [w.id, w.challenges.length])))"))
 bad, n = [], 0
 for wid, count in worlds:
     for i in range(count):
@@ -15,12 +15,12 @@ for wid, count in worlds:
                 time.sleep(0.12)
                 info = json.loads(page.js("""JSON.stringify({play: !!document.querySelector('.play'), prompt: (document.querySelector('.prompt') || {}).textContent || '',
                   widget: !!document.querySelector('.wbox > *'), over: document.documentElement.scrollWidth - window.innerWidth,
-                  wide: [...document.querySelectorAll('.p-body *')].filter(e => e.getBoundingClientRect().right > window.innerWidth + 1 || e.getBoundingClientRect().left < -1).length})"""))
+                  wide: (() => { const b = document.querySelector('.p-body'); if (!b) return 0; const c = b.getBoundingClientRect(); return [...document.querySelectorAll('.p-body *')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > c.right + 1 || r.left < c.left - 1); }).length; })()})"""))
                 problems = [l for l in page.logs if l.startswith("EXCEPTION")]
                 if not info["play"] or not info["prompt"] or not info["widget"]:
                     problems.append("empty screen")
                 if info["over"] > 0 or info["wide"]:
-                    problems.append("overflow: page +%dpx, %d elements outside" % (info["over"], info["wide"]))
+                    problems.append("overflow: page +%dpx, %d elements stick out of the card" % (info["over"], info["wide"]))
                 if problems:
                     bad.append("%s/%d/%d: %s" % (wid, i, lvl, "; ".join(problems)[:400]))
 print("screens opened: %d, with problems: %d" % (n, len(bad)))

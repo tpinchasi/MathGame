@@ -1,7 +1,7 @@
 // Runs one challenge: five rounds, hints, checking and feedback.
 // A round is { prompt, visual?, widget, check?, answer?, hints, explain, tries?, wrongMsg? }.
 // widget is either a widget object (checked with the button) or a factory taking ctx (judges itself).
-import { h, pick, range } from './util.js';
+import { h, pick, range, glue } from './util.js';
 import { sfx } from './sound.js';
 
 export const ROUNDS = 5, PASS = 4;
@@ -58,11 +58,14 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
     round = r;
     tries = hintIdx = 0;
     open = true;
-    prompt.innerHTML = r.prompt;
+    prompt.innerHTML = glue(r.prompt);
     visual.innerHTML = r.visual || '';
     widget = typeof r.widget === 'function' ? r.widget(ctx) : r.widget;
     wbox.innerHTML = '';
     wbox.append(widget.el);
+    // a long expression with its answer boxes shrinks until it fits a phone screen
+    const line = widget.el.querySelector('.w-body');
+    if (line) for (let fs = 1.5; line.scrollWidth > line.clientWidth + 1 && fs >= 0.9; fs -= 0.1) line.style.fontSize = `${fs.toFixed(1)}rem`;
     play.current = { round, widget }; // read by dev/e2e.html
     fb.className = 'feedback';
     fb.innerHTML = '';
@@ -75,7 +78,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
 
   const hints = () => round.hints || [];
   const labelHint = () => (hintBtn.textContent = hintIdx < hints().length ? '💡 רמז' : 'הראו לי את הפתרון');
-  const shownHints = () => hints().slice(0, hintIdx).map(t => `<div class="hint">💡 ${t}</div>`).join('');
+  const shownHints = () => hints().slice(0, hintIdx).map(t => `<div class="hint">💡 ${glue(t)}</div>`).join('');
 
   function hint() {
     if (!open) return;
@@ -107,7 +110,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
     if (tries >= (round.tries || 2)) return lose();
     if (hintIdx < hints().length) hintIdx++;
     fb.className = 'feedback warn';
-    fb.innerHTML = `<b>לא בדיוק, נסו שוב.</b> ${msg || ''}${shownHints()}`;
+    fb.innerHTML = `<b>לא בדיוק, נסו שוב.</b> ${glue(msg || '')}${shownHints()}`;
     labelHint();
   }
 
@@ -133,7 +136,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
   function lose() {
     if (round.answer != null && widget.set) widget.set(round.answer);
     fb.className = 'feedback bad';
-    fb.innerHTML = `<b>הפתרון:</b> ${round.explain || ''}`;
+    fb.innerHTML = `<b>הפתרון:</b> ${glue(round.explain || '')}`;
     finish(false);
   }
 

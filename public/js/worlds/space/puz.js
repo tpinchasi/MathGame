@@ -1,8 +1,8 @@
 // ערפילית החידות
-import { rnd, pick, shuffle, range, M, SYM } from '../util.js';
-import { inputs, box } from '../widgets.js';
-import { num, nums } from '../kit.js';
-import { scale, rep, W, critterIcon } from '../visuals.js';
+import { rnd, pick, shuffle, range, M, SYM } from '../../util.js';
+import { inputs, box } from '../../widgets.js';
+import { num, nums } from '../../kit.js';
+import { scale, rep, W, critterIcon } from '../../visuals.js';
 
 const sumOf = a => a.reduce((s, x) => s + x, 0);
 const digitsOf = n => String(n).split('').map(Number);
