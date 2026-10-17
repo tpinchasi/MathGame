@@ -2,7 +2,7 @@
 import { GAMES, gameOf, findWorld } from './games.js';
 import * as st from './state.js';
 import { play, ROUNDS, PASS } from './engine.js';
-import { h, glue } from './util.js';
+import { h, setText } from './util.js';
 import { accountant } from './art.js';
 import { sfx } from './sound.js';
 
@@ -117,7 +117,7 @@ function mapScreen(g) {
 function intro(ch, then, back) {
   modal(h('div', { class: 'intro' },
     h('h3', {}, ch.title),
-    h('div', { class: 'intro-body', html: glue(ch.intro) }),
+    (() => { const body = h('div', { class: 'intro-body' }); setText(body, ch.intro); return body; })(),
     h('div', { class: 'result-btns' },
       h('button', { type: 'button', class: 'btn primary', onclick: () => { closeModal(); if (then) then(); } }, 'הבנתי, קדימה!'),
       back ? h('button', { type: 'button', class: 'btn ghost', onclick: back }, 'חזרה') : null)));

@@ -150,9 +150,11 @@ function picturePattern(L) {
   }
   // level 3: far ahead in the line
   const len = unit.length, K = rnd(12, 30), r = (K - 1) % len, full = Math.floor((K - 1) / len);
+  const ends = K % len === 0, times = M(`${K / len} × ${len} = ${K}`);
   return mk(`החיות עומדות בתור ארוך מאוד, וכל הזמן לפי אותה חוקיות. מי עומד במקום ה־${K} בתור?`, strip([...range(2 * len, at), '…']), at(K - 1),
-    [`החוקיות חוזרת כל ${len} חיות. המקומות ${len}, ${2 * len}, ${3 * len}... הם תמיד סוף של חלק.`, `${M(`${full} × ${len} = ${full * len}`)}, כלומר במקום ה־${full * len} נגמר חלק שלם. מה בא ${r + 1 === 1 ? 'מיד אחריו' : `${r + 1} מקומות אחריו`}?`],
-    `החלק ${part} חוזר כל ${len} חיות. ${M(`${full} × ${len} = ${full * len}`)}, ולכן מקום ${K} הוא המקום ה־${r + 1} בחלק: ${at(K - 1)}.`);
+    [`החוקיות חוזרת כל ${len} חיות. המקומות ${len}, ${2 * len}, ${3 * len}... הם תמיד סוף של חלק.`,
+      ends ? `${times}, כלומר במקום ה־${K} בדיוק נגמר חלק שלם. מי עומד בסוף כל חלק?` : `${M(`${full} × ${len} = ${full * len}`)}, כלומר במקום ה־${full * len} נגמר חלק שלם. מה בא ${r + 1 === 1 ? 'מיד אחריו' : `${r + 1} מקומות אחריו`}?`],
+    ends ? `החלק ${part} חוזר כל ${len} חיות. ${times}, ולכן מקום ${K} הוא המקום האחרון בחלק: ${at(K - 1)}.` : `החלק ${part} חוזר כל ${len} חיות. ${M(`${full} × ${len} = ${full * len}`)}, ולכן מקום ${K} הוא המקום ה־${r + 1} בחלק: ${at(K - 1)}.`);
 }
 
 // number sequences: each rule returns [term(i), why]
@@ -316,7 +318,7 @@ const scales = {
       }
       const [D, s2] = pick([...BEASTS.big, ...BEASTS.mid]), [e, s3, p3] = pick(BEASTS.small), m = rnd(2, 5), w = rnd(2, 9);
       return num({
-        prompt: `${s3} ${e} אחד שוקל ${w}. המאזניים מאוזנים. כמה שוקל ${s2} ${D}?`, visual: zscale([D], reps(e, m)) + zscale([e], [w]), answer: m * w,
+        prompt: `${s3} ${e} אחד שוקל ${w}. שני המאזניים מאוזנים. כמה שוקל ${s2} ${D}?`, visual: zscale([D], reps(e, m)) + zscale([e], [w]), answer: m * w,
         hints: [`${s2} שוקל כמו ${m} ${p3}.`, `כל אחד מהם שוקל ${w}: ${range(m, () => w).join(' + ')}.`], explain: M(`${m} × ${w} = ${m * w}`),
       });
     }
@@ -327,7 +329,7 @@ const scales = {
         prompt: 'שני המאזניים מאוזנים. כמה שוקלת כל חיה?', visual: zscale([E, e], [S]) + zscale([E], useW ? [e, d] : reps(e, m)),
         fields: [[`${s2} ${e}:`, x], [`${s1} ${E}:`, big]],
         hints: [`במאזניים הראשונים, החליפו את ${E} במה שהוא שוקל לפי המאזניים השניים.`, useW ? `יוצא ש־2 ${e} ועוד ${d} שוקלים ${S}.` : `יוצא ש־${m + 1} ${e} שוקלים יחד ${S}.`],
-        explain: useW ? `${M(`${S} − ${d} = ${2 * x}`)}, אז ${e} שוקל ${x}, ו־${E} שוקל ${M(`${x} + ${d} = ${big}`)}.` : `${M(`${S} ÷ ${m + 1} = ${x}`)}, אז ${e} שוקל ${x}, ו־${E} שוקל ${M(`${m} × ${x} = ${big}`)}.`,
+        explain: useW ? `${M(`${S} − ${d} = ${2 * x}`)}, וזה המשקל של 2 ${e}. אז ${e} שוקל ${M(`${2 * x} ÷ 2 = ${x}`)}, ו־${E} שוקל ${M(`${x} + ${d} = ${big}`)}.` : `${M(`${S} ÷ ${m + 1} = ${x}`)}, אז ${e} שוקל ${x}, ו־${E} שוקל ${M(`${m} × ${x} = ${big}`)}.`,
       });
     }
     if (t === 1) {
@@ -352,7 +354,7 @@ const scales = {
     const [E, s1] = BEASTS.big[0], [D, , p2] = pick(BEASTS.mid), [e, s3, p3] = pick(BEASTS.small), a = rnd(2, 3), b = rnd(2, 4), w = rnd(2, 6), ask = pick(['E', 'ED']);
     const ans = ask === 'E' ? a * b * w : a * b * w + b * w;
     return num({
-      prompt: `${s3} ${e} אחד שוקל ${w}. כל המאזניים מאוזנים. ${ask === 'E' ? `כמה שוקל ${s1} ${E}?` : `כמה שוקלים יחד ${E} ו־${D}?`}`,
+      prompt: `${s3} ${e} אחד שוקל ${w}. שני המאזניים מאוזנים. ${ask === 'E' ? `כמה שוקל ${s1} ${E}?` : `כמה שוקלים יחד ${E} ו־${D}?`}`,
       visual: zscale([E], reps(D, a)) + zscale([D], reps(e, b)), answer: ans,
       hints: [`קודם מצאו כמה שוקל ${D}: הוא שוקל כמו ${b} ${p3}.`, `${D} שוקל ${M(`${b} × ${w} = ${b * w}`)}, ו־${E} שוקל כמו ${a} ${p2}.`],
       explain: `${D} שוקל ${M(`${b} × ${w} = ${b * w}`)}. ${E} שוקל ${M(`${a} × ${b * w} = ${a * b * w}`)}.${ask === 'E' ? '' : ` יחד: ${M(`${a * b * w} + ${b * w} = ${ans}`)}.`}`,
@@ -494,7 +496,7 @@ const sudoku = {
         return sudOK(s) && giv.every((x, i) => !x || s[i] === x);
       },
       hints: [
-        L === 1 ? `חפשו שורה, עמודה או ריבוע קטן שחסר בהם רק ${what} ${animals ? 'אחת' : 'אחד'}.` : `בחרו ${what} ובדקו: באיזה מקום ${animals ? 'היא יכולה' : 'הוא יכול'} להופיע בשורה הזאת, בלי לחזור על עצמו בעמודה או בריבוע?`,
+        L === 1 ? `חפשו שורה, עמודה או ריבוע קטן שחסר${animals ? 'ה' : ''} בהם רק ${what} ${animals ? 'אחת' : 'אחד'}.` : `בחרו שורה ו${what} שחסר${animals ? 'ה' : ''} בה. באיזו משבצת בשורה ${animals ? 'היא יכולה' : 'הוא יכול'} להיות, בלי לחזור על ${animals ? 'עצמה' : 'עצמו'} בעמודה או בריבוע הקטן?`,
         ...(L === 3 ? ['כשאין צעד בטוח, הסתכלו על ריבוע קטן ובדקו איזה מקום נשאר בו לכל אחד מהחסרים.'] : []),
         `השורה העליונה היא: ${M(top)}`,
       ],
@@ -552,7 +554,7 @@ const magic = {
         widget: inputs(html), answer, tries: 3,
         check: v => magicLinesOK(i => (given.includes(i) ? q[i] : v['m' + i]), S),
         hints: given.includes(4) ? ['חפשו קו שחסר בו רק מספר אחד. אחרי שממלאים אותו, מופיעים קווים חדשים כאלה.', oneGapHint(q, given, S)]
-          : ['כאן אין קו שחסר בו רק מספר אחד. סוד: בריבוע קסם של 3 על 3, המספר שבאמצע הוא תמיד שליש מהסכום.', `באמצע נמצא ${M(`${S} ÷ 3 = ${q[4]}`)}. עכשיו יש קווים שחסר בהם רק מספר אחד.`],
+          : ['המשבצת שבאמצע ריקה, ויש סוד: בריבוע קסם של 3 על 3, המספר שבאמצע הוא תמיד שליש מהסכום.', `באמצע נמצא ${M(`${S} ÷ 3 = ${q[4]}`)}. עכשיו יש קווים שחסר בהם רק מספר אחד.`],
         explain: `הסכום בכל כיוון הוא ${S}:${sqGrid(q, range(9).filter(i => !given.includes(i)))}`,
       };
     }
@@ -565,7 +567,7 @@ const magic = {
         widget: tileSquare(cells, range(9, i => i + 1).filter(v => !given.map(i => q[i]).includes(v))),
         answer: Object.fromEntries(q.map((v, i) => ['m' + i, v]).filter((_, i) => !given.includes(i))), tries: 3,
         check: v => magicLinesOK(i => (given.includes(i) ? q[i] : v['m' + i]), 15),
-        hints: ['המספר 5 נמצא בכמה שהכי הרבה קווים, ולכן מקומו באמצע. מה שמול כל מספר, מעבר לאמצע, משלים אותו ל־10.', `באמצע 5. מול ${q[corner]} נמצא ${10 - q[corner]}, ומול ${q[edge]} נמצא ${10 - q[edge]}. בפינות יש רק מספרים זוגיים.`],
+        hints: [`המספר שבאמצע הוא תמיד שליש מהסכום: ${M('15 ÷ 3 = 5')}. ומה שמול כל מספר, מעבר לאמצע, משלים אותו ל־10.`, `באמצע 5. מול ${q[corner]} נמצא ${10 - q[corner]}, ומול ${q[edge]} נמצא ${10 - q[edge]}. בפינות יש רק מספרים זוגיים.`],
         explain: `באמצע 5, וכל שני מספרים זה מול זה משלימים ל־10:${sqGrid(q, range(9).filter(i => !given.includes(i)))}`,
       };
     }
@@ -616,7 +618,7 @@ const parity = {
       if (t === 1) {
         const [e, , p] = pick([['🐧', 'פינגווין', 'פינגווינים'], ['🦆', 'ברווז', 'ברווזים'], ['🐰', 'ארנב', 'ארנבים'], ['🐒', 'קוף', 'קופים']]), n = rnd(5, 15), ev = isEven(n) ? 0 : 1;
         return {
-          prompt: `ה${p} יוצאים לטייל בזוגות. האם מספר ה${p} זוגי או אי־זוגי?`, visual: `<div class="zpuz-herd">${range(n, () => `<span>${e}</span>`).join('')}</div>`,
+          prompt: `ה${p} רוצים לטייל בזוגות. האם מספר ה${p} זוגי או אי־זוגי?`, visual: `<div class="zpuz-herd">${range(n, () => `<span>${e}</span>`).join('')}</div>`,
           widget: choice(PAR, { cols: 2, cls: 'zpuz-two' }), answer: ev, check: v => v === ev,
           hints: ['ספרו אותם, או חברו אותם בראש לזוגות.', `יש ${n} ${p}.`],
           explain: ev ? `יש ${n}: ${(n - 1) / 2} זוגות, ואחד נשאר לבד. לכן ${n} אי־זוגי.` : `יש ${n}: ${n / 2} זוגות בדיוק. לכן ${n} זוגי.`,
@@ -655,11 +657,11 @@ const parity = {
         return {
           prompt: `בגן יש ${n} כלובים של קופים, ובכל כלוב מספר אי־זוגי של קופים. האם מספר כל הקופים יחד זוגי או אי־זוגי?`,
           widget: choice(PAR, { cols: 2, cls: 'zpuz-two' }), answer: ev, check: v => v === ev,
-          hints: ['שני מספרים אי־זוגיים יחד נותנים מספר זוגי. חברו את הכלובים לזוגות.', ev ? `${n} כלובים: ${n / 2} זוגות של כלובים.` : `${n} כלובים: ${(n - 1) / 2} זוגות של כלובים, וכלוב אחד נשאר לבד.`],
+          hints: ['שני מספרים אי־זוגיים יחד נותנים מספר זוגי. חברו את הכלובים לזוגות.', ev ? `${n} כלובים: ${n === 3 ? 'זוג אחד' : `${(n - 1) / 2} זוגות`} של כלובים, וכלוב אחד נשאר לבד.` : `${n} כלובים: ${n / 2} זוגות של כלובים.`],
           explain: ev ? 'כל זוג כלובים נותן מספר זוגי, אבל נשאר כלוב אחד עם מספר אי־זוגי. לכן הסכום אי־זוגי.' : 'כל זוג כלובים נותן מספר זוגי, וכל הכלובים מתחלקים לזוגות. לכן הסכום זוגי.',
         };
       }
-      const k = rnd(3, 6), S = rnd(15, 40), yes = S % 2 === k % 2, ex = yes ? M(`${range(k - 1, () => 1).join(' + ')} + ${S - k + 1} = ${S}`) : '';
+      const k = rnd(3, 6), S = rnd(Math.max(15, k * k), 40), yes = S % 2 === k % 2, ex = yes ? M(`${range(k - 1, i => 2 * i + 1).join(' + ')} + ${S - (k - 1) ** 2} = ${S}`) : '';
       return {
         prompt: `האם אפשר למצוא ${k} מספרים אי־זוגיים שהסכום שלהם הוא ${S}?`,
         widget: choice(['כן', 'לא'], { cols: 2, cls: 'zpuz-two' }), answer: yes ? 0 : 1, check: v => v === (yes ? 0 : 1),
@@ -719,6 +721,20 @@ const pyramid = {
       return box(`p${r}_${c}`, String(v).length + 1);
     });
     const bottomKnown = range(n).every(c => given.includes(`0,${c}`)), blankBottom = range(n).find(c => !given.includes(`0,${c}`));
+    // can it be filled box by box, each time from a box and the two under it with two of them known?
+    const known = new Set(given);
+    for (let moved = true; moved; ) {
+      moved = false;
+      for (let r = 1; r < n; r++)
+        for (let c = 0; c < n - r; c++) {
+          const tri = [`${r},${c}`, `${r - 1},${c}`, `${r - 1},${c + 1}`];
+          if (tri.filter(x => known.has(x)).length === 2) {
+            tri.forEach(x => known.add(x));
+            moved = true;
+          }
+        }
+    }
+    const direct = known.size === (n * (n + 1)) / 2;
     return {
       prompt: 'השלימו את מגדל הארגזים. כל ארגז שווה לסכום שני הארגזים שמתחתיו.',
       widget: inputs(`<div class="pyr zpuz-pyr">${html}</div>`), answer, tries: 3,
@@ -728,7 +744,7 @@ const pyramid = {
         return range(n - 1, r => r + 1).every(r => g[r].every((_, c) => at(r, c) === at(r - 1, c) + at(r - 1, c + 1)));
       },
       hints: [
-        bottomKnown ? 'התחילו מהשורה התחתונה ועלו למעלה. כל פעם חברו שני ארגזים שכנים.' : L < 3 ? 'חפשו שלושה ארגזים (ארגז ושניים שמתחתיו) שכבר ידועים בהם שניים. את השלישי מוצאים בחיבור או בחיסור.' : 'כאן אי אפשר להתקדם ישר. נחשו מספר לארגז ריק בשורה התחתונה, מלאו את השאר ובדקו אם הארגז העליון מסתדר. אם לא, תקנו את הניחוש.',
+        bottomKnown ? 'התחילו מהשורה התחתונה ועלו למעלה. כל פעם חברו שני ארגזים שכנים.' : direct ? 'חפשו שלושה ארגזים (ארגז ושניים שמתחתיו) שכבר ידועים בהם שניים. את השלישי מוצאים בחיבור או בחיסור.' : 'כאן אי אפשר לפתור הכול רק בחיבור ובחיסור. נחשו מספר לארגז ריק בשורה התחתונה, מלאו את השאר ובדקו אם זה מסתדר עם הארגזים שכבר כתובים למעלה. אם לא, תקנו את הניחוש.',
         bottomKnown ? `בשורה השנייה מלמטה: ${M(`${g[0][0]} + ${g[0][1]} = ${g[1][0]}`)}.` : `בשורה התחתונה, הארגז ה־${blankBottom + 1} משמאל הוא ${g[0][blankBottom]}.`,
       ],
       explain: `<div class="pyr zpuz-pyr">${rowsHTML((r, c, v) => cell(v))}</div>`,
@@ -760,7 +776,7 @@ const steps = {
       }
       if (t === 3) {
         const P = pick([50, 100]), A = rnd(8, P === 50 ? 25 : 45), B = rnd(5, P === 50 ? 20 : 40);
-        return two({ prompt: `בחנות של הגן, נועה קנתה כובע ב־${A} שקלים ובקבוק מים ב־${B} שקלים. היא שילמה בשטר של ${P} שקלים. כמה עודף קיבלה?`, s1: 'יחד הם עלו:', a1: A + B, a2: P - A - B, hints: ['שלב 1: כמה עלו הכובע והבקבוק יחד?', `יחד: ${M(`${A} + ${B} = ${A + B}`)}. כמה חסר מזה עד ${P}?`], explain: `יחד: ${M(`${A} + ${B} = ${A + B}`)}. עודף: ${M(`${P} − ${A + B} = ${P - A - B}`)}.` });
+        return two({ prompt: `בחנות של הגן, נועה קנתה כובע ב־${A} שקלים ובובה של קוף ב־${B} שקלים. היא שילמה בשטר של ${P} שקלים. כמה עודף קיבלה?`, s1: 'יחד הם עלו:', a1: A + B, a2: P - A - B, hints: ['שלב 1: כמה עלו הכובע והבובה יחד?', `יחד: ${M(`${A} + ${B} = ${A + B}`)}. כמה חסר מזה עד ${P}?`], explain: `יחד: ${M(`${A} + ${B} = ${A + B}`)}. עודף: ${M(`${P} − ${A + B} = ${P - A - B}`)}.` });
       }
       if (t === 4) {
         const A = rnd(15, 40), B = rnd(3, 12);
@@ -772,7 +788,7 @@ const steps = {
     if (L === 2) {
       if (t === 0) {
         const A = rnd(3, 6), B = rnd(4, 9), C = rnd(3, A * B - 4);
-        return num({ prompt: `בגן יש ${A} כלובים של תוכים, ובכל כלוב ${B} תוכים. ${C} תוכים עפו לכלוב הגדול. כמה תוכים נשארו בכלובים הקטנים?`, answer: A * B - C, hints: ['שלב 1: כמה תוכים היו בכל הכלובים יחד?', `${M(`${A} × ${B} = ${A * B}`)} תוכים. עכשיו הורידו את מי שעף.`], explain: `${M(`${A} × ${B} = ${A * B}`)}, ואחר כך ${M(`${A * B} − ${C} = ${A * B - C}`)}.` });
+        return num({ prompt: `בגן יש ${A} כלובים קטנים של תוכים, ובכל כלוב ${B} תוכים. ${C} תוכים עפו לכלוב הגדול. כמה תוכים נשארו בכלובים הקטנים?`, answer: A * B - C, hints: ['שלב 1: כמה תוכים היו בכל הכלובים יחד?', `${M(`${A} × ${B} = ${A * B}`)} תוכים. עכשיו הורידו את מי שעף.`], explain: `${M(`${A} × ${B} = ${A * B}`)}, ואחר כך ${M(`${A * B} − ${C} = ${A * B - C}`)}.` });
       }
       if (t === 1) {
         let A, B, C;
@@ -810,7 +826,7 @@ const steps = {
       let N, T, k;
       do [N, T, k] = [rnd(15, 35), rnd(2, 4), pick([4, 5, 6])]; while ((N + T) % k === 0);
       const cars = Math.ceil((N + T) / k);
-      return num({ prompt: `לגן החיות הגיעו ${N} ילדים ו־${T} מורים. בכל קרון של הרכבת הקטנה יש ${k} מקומות. כמה קרונות צריך כדי שכולם ייסעו יחד?`, answer: cars, hints: [`שלב 1: כמה אנשים יש בסך הכול? ${M(`${N} + ${T} = ${N + T}`)}.`, `${M(`${cars - 1} × ${k} = ${(cars - 1) * k}`)} מקומות זה לא מספיק. מה עושים עם מי שנשאר?`], explain: `${N + T} אנשים. ${M(`${cars - 1} × ${k} = ${(cars - 1) * k}`)}, ונשארו עוד ${N + T - (cars - 1) * k}, אז צריך עוד קרון: ${cars} קרונות.` });
+      return num({ prompt: `לגן החיות הגיעו ${N} ילדים ו־${T} מורים. בכל קרון של הרכבת הקטנה יש ${k} מקומות. כמה קרונות צריך כדי שכולם ייסעו יחד?`, answer: cars, hints: [`שלב 1: כמה אנשים יש בסך הכול? ${M(`${N} + ${T} = ${N + T}`)}.`, `${M(`${cars - 1} × ${k} = ${(cars - 1) * k}`)} מקומות זה לא מספיק. מה עושים עם מי שנשאר?`], explain: `${N + T} אנשים. ${M(`${cars - 1} × ${k} = ${(cars - 1) * k}`)}, ${N + T - (cars - 1) * k === 1 ? 'ונשאר עוד אחד' : `ונשארו עוד ${N + T - (cars - 1) * k}`}, אז צריך עוד קרון: ${cars} קרונות.` });
     }
     if (t === 4) {
       const d = pick([2, 3, 4, 5]), parts = rnd(4, 9), Lw = d * parts;
@@ -822,9 +838,10 @@ const steps = {
 };
 
 // ---------- 8. the secret number ----------
-// each clue is { text, pred, fact }; fact is the one-line check shown in the solution
+// each clue is { text, pred, fact, alt }; fact is the one-line check shown in the solution.
+// alt is another way a child could read the clue (e.g. "between" with its ends); the answer must be unique both ways.
 function secretPool(s, L) {
-  const ds = digitsOf(s), pool = [], add = (text, pred, fact) => pool.push({ text, pred, fact });
+  const ds = digitsOf(s), pool = [], add = (text, pred, fact, alt) => pool.push({ text, pred, fact, alt });
   const [t, u] = ds.length === 2 ? ds : [ds[1], ds[2]];
   add(isEven(s) ? 'אני מספר זוגי.' : 'אני מספר אי־זוגי.', n => n % 2 === s % 2, `${s} ${isEven(s) ? 'זוגי' : 'אי־זוגי'}.`);
   const sd = sumOf(ds);
@@ -839,17 +856,17 @@ function secretPool(s, L) {
     else add(`ספרת האחדות שלי היא ${u}.`, n => n % 10 === u, `ספרת האחדות ${u}.`);
     const a = Math.max(9, s - rnd(2, 15)), b = Math.min(100, s + rnd(2, 15));
     add(`אני גדול מ־${a}.`, n => n > a, M(`${s} > ${a}`) + '.');
-    add(`אני קטן מ־${b}.`, n => n < b, M(`${s} < ${b}`) + '.');
+    add(`אני קטן מ־${b}.`, n => n < b, M(`${s} &lt; ${b}`) + '.');
   } else if (L === 2) {
     const H = ds[0];
     add(`ספרת המאות שלי היא ${H}.`, n => Math.floor(n / 100) === H, `ספרת המאות ${H}.`);
     if (Math.random() < 0.5) add(`ספרת העשרות שלי היא ${t}.`, n => Math.floor(n / 10) % 10 === t, `ספרת העשרות ${t}.`);
     else add(`ספרת האחדות שלי היא ${u}.`, n => n % 10 === u, `ספרת האחדות ${u}.`);
     const lo = H * 100 + (t >= 5 ? 50 : 0);
-    add(`אני בין ${lo} ל־${lo + 50}.`, n => n > lo && n < lo + 50, `${s} בין ${lo} ל־${lo + 50}.`);
+    if (s > lo) add(`אני בין ${lo} ל־${lo + 50}.`, n => n > lo && n < lo + 50, `${s} בין ${lo} ל־${lo + 50}.`, n => n >= lo && n <= lo + 50);
     const distinct = new Set(ds).size;
     add(distinct === 3 ? 'כל הספרות שלי שונות זו מזו.' : distinct === 1 ? 'כל הספרות שלי זהות.' : 'יש לי בדיוק שתי ספרות זהות.', n => new Set(digitsOf(n)).size === distinct, `הספרות: ${ds.join(', ')}.`);
-    if (ds[0] === ds[2]) add('ספרת המאות שלי שווה לספרת האחדות.', n => Math.floor(n / 100) === n % 10, `${ds[0]} ו־${ds[2]}.`);
+    if (ds[0] === ds[2]) add('ספרת המאות שלי שווה לספרת האחדות.', n => Math.floor(n / 100) === n % 10, `ספרת המאות ${ds[0]}, ספרת האחדות ${ds[2]}.`);
   } else {
     const d = Math.abs(t - u);
     add(d === 0 ? 'שתי הספרות שלי זהות.' : `ההפרש בין שתי הספרות שלי הוא ${d}.`, n => Math.abs(Math.floor(n / 10) - (n % 10)) === d, d === 0 ? `${t} ו־${u}.` : M(`${Math.max(t, u)} − ${Math.min(t, u)} = ${d}`) + '.');
@@ -857,11 +874,12 @@ function secretPool(s, L) {
     if (u && t === 2 * u) add('ספרת העשרות שלי היא פי 2 מספרת האחדות.', n => Math.floor(n / 10) === 2 * (n % 10), M(`${t} = 2 × ${u}`) + '.');
     if (t && u === 2 * t) add('ספרת האחדות שלי היא פי 2 מספרת העשרות.', n => n % 10 === 2 * Math.floor(n / 10), M(`${u} = 2 × ${t}`) + '.');
     if (u && u !== t) add(u > t ? 'כשהופכים את סדר הספרות שלי, מקבלים מספר גדול ממני.' : 'כשהופכים את סדר הספרות שלי, מקבלים מספר קטן ממני.',
-      n => n % 10 > 0 && Math.sign((n % 10) * 10 + Math.floor(n / 10) - n) === Math.sign(u - t), `ההפוך הוא ${u * 10 + t}.`);
-    for (const k of [3, 4, 6, 7, 8, 9]) if (s % k === 0 && s <= 10 * k) add(`אני בלוח הכפל של ${k}.`, n => n % k === 0 && n <= 10 * k, M(`${s / k} × ${k} = ${s}`) + '.');
+      n => n % 10 > 0 && Math.sign((n % 10) * 10 + Math.floor(n / 10) - n) === Math.sign(u - t), `ההפוך הוא ${u * 10 + t}.`,
+      n => Math.sign((n % 10) * 10 + Math.floor(n / 10) - n) === Math.sign(u - t)); // 40 turned round is 04
+    for (const k of [3, 4, 6, 7, 8, 9]) if (s % k === 0 && s <= 10 * k) add(`אני בלוח הכפל של ${k}.`, n => n % k === 0 && n <= 10 * k, M(`${s / k} × ${k} = ${s}`) + '.', n => n % k === 0);
     const r = Math.round(Math.sqrt(s));
     if (r * r === s) add('אני מספר כפול עצמו.', n => Number.isInteger(Math.sqrt(n)), M(`${r} × ${r} = ${s}`) + '.');
-    add(s > 50 ? 'אני גדול מ־50.' : 'אני קטן מ־50.', n => (s > 50 ? n > 50 : n < 50), M(`${s} ${s > 50 ? '>' : '<'} 50`) + '.');
+    add(s > 50 ? 'אני גדול מ־50.' : 'אני קטן מ־50.', n => (s > 50 ? n > 50 : n < 50), M(`${s} ${s > 50 ? '&gt;' : '&lt;'} 50`) + '.');
   }
   return pool;
 }
@@ -870,8 +888,10 @@ function makeSecret(L) {
   for (;;) {
     const s = rnd(lo, hi);
     if (L === 3 && s % 10 === 0) continue;
+    const fits = (cl, alt) => all.filter(n => cl.every(c => ((alt && c.alt) || c.pred)(n)));
+    const unique = cl => fits(cl).length === 1 && fits(cl, true).length === 1;
     let cands = all, clues = [];
-    for (const cl of shuffle(secretPool(s, L))) {
+    for (const cl of shuffle(secretPool(s, L).filter(c => c.pred(s)))) {
       const next = cands.filter(cl.pred);
       if (next.length < cands.length) {
         clues.push(cl);
@@ -879,10 +899,10 @@ function makeSecret(L) {
       }
       if (cands.length === 1) break;
     }
-    if (cands.length !== 1) continue;
+    if (cands.length !== 1 || !unique(clues)) continue;
     for (let i = clues.length - 1; i >= 0; i--) {
       const rest = clues.filter((_, j) => j !== i);
-      if (all.filter(n => rest.every(c => c.pred(n))).length === 1) clues = rest;
+      if (unique(rest)) clues = rest;
     }
     if (clues.length >= mn && clues.length <= mx) return { s, clues, all };
   }

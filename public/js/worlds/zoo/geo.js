@@ -501,8 +501,11 @@ const ruler = {
       }
       if (t === 1) {
         const k = rnd(0, 2), m = rnd(1, 5), c = rnd(1, 19) * 5, tot = m * 100 + c;
-        if (k === 0) return num({ prompt: `החבל של הנדנדה ארוך ${mcm(tot)}. כמה סנטימטרים זה?`, answer: tot, post: ' ס"מ', hints: ['במטר אחד יש 100 ס"מ.', `${m} מטרים הם ${m * 100} ס"מ. הוסיפו עוד ${c}.`], explain: `${M(`${m * 100} + ${c} = ${tot}`)} ס"מ.` });
-        if (k === 1) return num({ prompt: `הג׳ירפה גבוהה ${m} מטרים. כמה סנטימטרים זה?`, answer: m * 100, post: ' ס"מ', hints: ['במטר אחד יש 100 ס"מ.', `${m} פעמים 100.`], explain: `${M(`${m} × 100 = ${m * 100}`)} ס"מ.` });
+        if (k === 0) return num({ prompt: `החבל של הנדנדה ארוך ${mcm(tot)}. כמה סנטימטרים זה?`, answer: tot, post: ' ס"מ', hints: ['במטר אחד יש 100 ס"מ.', `${m === 1 ? 'מטר אחד הוא' : `${m} מטרים הם`} ${m * 100} ס"מ. הוסיפו עוד ${c}.`], explain: `${M(`${m * 100} + ${c} = ${tot}`)} ס"מ.` });
+        if (k === 1) {
+          const g = rnd(3, 5);
+          return num({ prompt: `הג׳ירפה גבוהה ${g} מטרים. כמה סנטימטרים זה?`, answer: g * 100, post: ' ס"מ', hints: ['במטר אחד יש 100 ס"מ.', `${g} פעמים 100.`], explain: `${M(`${g} × 100 = ${g * 100}`)} ס"מ.` });
+        }
         return {
           prompt: `הנחש ארוך ${tot} ס"מ. כמה מטרים וכמה סנטימטרים זה?`,
           widget: inputs(`<div class="ans-line">${box('m', 2)} מטרים ו־${box('c', 3)} ס"מ</div>`), answer: { m, c },
@@ -640,9 +643,10 @@ const typeTime = (T, { prompt, visual, hints, explain }) => ({
   check: v => v.h % 12 === hr12(T) % 12 && v.m === norm(T) % 60, hints, explain,
 });
 const nextH = H => (H % 12) + 1;
+const mins = n => (n === 1 ? 'דקה אחת' : `${n} דקות`);
 const say = T => {
   const H = hr12(T), m = norm(T) % 60;
-  return m === 0 ? `${H} בדיוק` : m === 30 ? `${H} וחצי` : m === 15 ? `${H} ורבע` : m === 45 ? `רבע ל־${nextH(H)}` : m < 30 ? `${m} דקות אחרי ${H}` : `${60 - m} דקות לפני ${nextH(H)}`;
+  return m === 0 ? `${H} בדיוק` : m === 30 ? `${H} וחצי` : m === 15 ? `${H} ורבע` : m === 45 ? `רבע ל־${nextH(H)}` : m < 30 ? `${mins(m)} אחרי ${H}` : `${mins(60 - m)} לפני ${nextH(H)}`;
 };
 const readExplain = T => {
   const H = hr12(T), m = norm(T) % 60;
@@ -668,7 +672,7 @@ const clockRead = {
       }
       if (t === 1) {
         const words = Math.random() < 0.5;
-        return setRound(T, 15, { prompt: `ארוחת הצהריים של הזברות ב־${words ? say(T) : TM(T)}. כוונו את השעון.`, hints, explain: `המחוג הארוך על ${m / 5 || 12}, והמחוג הקצר ${m ? `בין ${H} ל־${nextH(H)}` : `על ${H}`}.` });
+        return setRound(T, 15, { prompt: `ארוחת הזברות ב־${words ? say(T) : TM(T)}. כוונו את השעון.`, hints, explain: `המחוג הארוך על ${m / 5 || 12}, והמחוג הקצר ${m ? `בין ${H} ל־${nextH(H)}` : `על ${H}`}.` });
       }
       const cands = [T, (m / 5 || 12) * 60 + H * 5, T + 60, T - 60, T + 30].map(norm).filter((x, i, a) => a.indexOf(x) === i && (x % 60) % 5 === 0);
       const opts = shuffle([T, ...shuffle(cands.slice(1)).slice(0, 3)]), ans = opts.indexOf(T);
@@ -721,8 +725,8 @@ const clockRead = {
       const H = rnd(1, 11), m = rnd(1, 59), T = H * 60 + m, words = m % 5 && Math.random() < 0.5;
       return setRound(T, 1, {
         prompt: `השומר מאכיל את הזברות ב־${words ? say(T) : TM(T)}. כוונו את השעון בדיוק.`,
-        hints: ['כל שנתה קטנה היא דקה אחת. אפשר לגרור, ואז לתקן בכפתורי הדקות.', `${TM(T)}: המחוג הארוך ${m % 5 ? `${m % 5} שנתות אחרי ${Math.floor(m / 5) || 12}` : `על ${m / 5}`}.`],
-        explain: `${TM(T)}: המחוג הארוך על השנתה של ${m} דקות, והקצר ${m < 30 ? 'קצת אחרי' : 'יותר מחצי הדרך אחרי'} ${H}.`,
+        hints: ['כל שנתה קטנה היא דקה אחת. אפשר לגרור, ואז לתקן בכפתורי הדקות.', `${TM(T)}: המחוג הארוך ${m % 5 ? `${m % 5 === 1 ? 'שנתה אחת' : `${m % 5} שנתות`} אחרי ${Math.floor(m / 5) || 12}` : `על ${m / 5}`}.`],
+        explain: `${TM(T)}: המחוג הארוך על השנתה של ${m} דקות, והקצר ${m === 30 ? 'בדיוק באמצע' : m < 30 ? 'לפני האמצע' : 'אחרי האמצע'} בין ${H} ל־${nextH(H)}.`,
       });
     }
     if (t === 2) {
@@ -769,7 +773,7 @@ const elapsed = {
         return {
           prompt: 'כמה זמן נמשכה ההופעה של התוכים?', visual: twoClocks(S, S + D, 'התחילה', 'נגמרה'), widget: choice(opts, { cols: 2 }), answer: ans, check: v => v === ans,
           hints: ['קראו את השעה בכל שעון.', `ההופעה התחילה ב־${TM(S)} ונגמרה ב־${TM(S + D)}. קפצו בחצאי שעות.`],
-          explain: `מ־${TM(S)} עד ${TM(S + D)} עוברות ${LB[k]}.`,
+          explain: `מ־${TM(S)} עד ${TM(S + D)} ${k < 3 ? 'עוברת' : 'עוברות'} ${LB[k]}.`,
         };
       }
       const S = rnd(1, 9) * 60 + pick([0, 0, 30]), d = rnd(1, 3);
@@ -793,8 +797,8 @@ const elapsed = {
         const S = rnd(7, 10) * 60 + rnd(0, 11) * 5, d = rnd(13, 34) * 5, E = S + d;
         return nums({
           prompt: `הסרט על הזברות התחיל ב־${TM(S)} ונגמר ב־${TM(E)}. כמה זמן הוא נמשך?`, fields: [['שעות:', Math.floor(d / 60)], ['דקות:', d % 60]],
-          hints: ['קפצו קודם בשעות שלמות, כל עוד לא עוברים את הסוף.', `מ־${TM(S)} עד ${TM(S + Math.floor(d / 60) * 60)} עוברות ${dur(Math.floor(d / 60) * 60)}. כמה דקות נשארו עד ${TM(E)}?`],
-          explain: `${dur(Math.floor(d / 60) * 60)} מביאות אותנו ל־${TM(S + Math.floor(d / 60) * 60)}, ומשם עוד ${d % 60} דקות עד ${TM(E)}. יחד ${dur(d)}.`,
+          hints: ['קפצו קודם בשעות שלמות, כל עוד לא עוברים את הסוף.', `מ־${TM(S)} עד ${TM(S + Math.floor(d / 60) * 60)} ${d < 120 ? 'עוברת' : 'עוברות'} ${dur(Math.floor(d / 60) * 60)}. כמה דקות נשארו עד ${TM(E)}?`],
+          explain: `${dur(Math.floor(d / 60) * 60)} ${d < 120 ? 'מביאה' : 'מביאות'} אותנו ל־${TM(S + Math.floor(d / 60) * 60)}${d % 60 ? `, ומשם עוד ${d % 60} דקות עד ${TM(E)}` : ', וזה בדיוק הסוף'}. יחד ${dur(d)}.`,
         });
       }
       const S = rnd(1, 10) * 60 + rnd(0, 11) * 5, d = rnd(4, 19) * 5;
@@ -967,8 +971,8 @@ const coins = {
         const pay = price < 1000 && Math.random() < 0.5 ? 1000 : 2000, ch = pay - price, up = price + 100 - (price % 100);
         return agRound(ch, {
           prompt: `כובע עולה ${money(price)}. שילמו ב${pay === 1000 ? 'מטבע' : 'שטר'} של ${money(pay)}. כמה עודף מקבלים?`,
-          hints: ['השלימו קודם לשקל השלם הבא, ואחר כך עד הסכום ששילמו.', `מ־${money(price)} עד ${money(up)} חסרות ${up - price} אגורות, ומשם עד ${money(pay)} עוד ${money(pay - up)}.`],
-          explain: `${up - price} אגורות ועוד ${money(pay - up)}: העודף הוא ${money(ch)}.`,
+          hints: ['השלימו קודם לשקל השלם הבא, ואחר כך עד הסכום ששילמו.', `מ־${money(price)} עד ${money(up)} חסרות ${up - price} אגורות${up < pay ? `, ומשם עד ${money(pay)} עוד ${money(pay - up)}` : ''}.`],
+          explain: up < pay ? `${up - price} אגורות ועוד ${money(pay - up)}: העודף הוא ${money(ch)}.` : `מ־${money(price)} עד ${money(pay)} חסרות ${up - price} אגורות, וזה העודף.`,
         });
       }
       if (t === 2) {
@@ -1077,7 +1081,9 @@ const fence = {
       }
       if (t === 1) return count(shapeCells(rnd(7, 11)), 'מה ההיקף של המכלאה? כל צלע של משבצת היא מטר אחד.');
       const a = rnd(2, 12), b = rnd(2, 12), P = 2 * (a + b);
-      const pic = `<svg viewBox="-30 -34 250 144" class="zgeo-shape" style="max-width:250px"><rect x="0" y="0" width="180" height="96" class="zgeo-fill"/><text x="90" y="-12" class="zgeo-lab">${a}</text><text x="194" y="55" class="zgeo-lab">?</text></svg>`;
+      // the side marked a is drawn longer or shorter than the side marked ?, as in the numbers
+      const [rw, rh] = a > b ? [180, 96] : a < b ? [100, 150] : [126, 126];
+      const pic = `<svg viewBox="-30 -34 ${rw + 70} ${rh + 48}" class="zgeo-shape" style="max-width:${rw + 70}px"><rect x="0" y="0" width="${rw}" height="${rh}" class="zgeo-fill"/><text x="${rw / 2}" y="-12" class="zgeo-lab">${a}</text><text x="${rw + 14}" y="${rh / 2 + 7}" class="zgeo-lab">?</text></svg>`;
       return num({
         prompt: `ההיקף של מכלאה בצורת מלבן הוא ${P} מטרים. צלע אחת שלה ${a} מטרים. מה האורך של הצלע שמסומנת בסימן שאלה?`, visual: pic, answer: b, post: ' מטרים',
         hints: ['במלבן יש שני זוגות של צלעות שוות.', `שתי הצלעות של ${a} מטרים הן יחד ${2 * a}. נשארו ${P - 2 * a} מטרים לשתי הצלעות האחרות.`],

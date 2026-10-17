@@ -1,7 +1,7 @@
 // Runs one challenge: five rounds, hints, checking and feedback.
 // A round is { prompt, visual?, widget, check?, answer?, hints, explain, tries?, wrongMsg? }.
 // widget is either a widget object (checked with the button) or a factory taking ctx (judges itself).
-import { h, pick, range, glue } from './util.js';
+import { h, pick, range, setText } from './util.js';
 import { sfx } from './sound.js';
 
 export const ROUNDS = 5, PASS = 4;
@@ -58,7 +58,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
     round = r;
     tries = hintIdx = 0;
     open = true;
-    prompt.innerHTML = glue(r.prompt);
+    setText(prompt, r.prompt);
     visual.innerHTML = r.visual || '';
     widget = typeof r.widget === 'function' ? r.widget(ctx) : r.widget;
     wbox.innerHTML = '';
@@ -78,14 +78,14 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
 
   const hints = () => round.hints || [];
   const labelHint = () => (hintBtn.textContent = hintIdx < hints().length ? '💡 רמז' : 'הראו לי את הפתרון');
-  const shownHints = () => hints().slice(0, hintIdx).map(t => `<div class="hint">💡 ${glue(t)}</div>`).join('');
+  const shownHints = () => hints().slice(0, hintIdx).map(t => `<div class="hint">💡 ${t}</div>`).join('');
 
   function hint() {
     if (!open) return;
     if (hintIdx >= hints().length) return lose();
     hintIdx++;
     fb.className = 'feedback info';
-    fb.innerHTML = shownHints();
+    setText(fb, shownHints());
     labelHint();
   }
 
@@ -94,7 +94,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
     const v = widget.value();
     if (v == null) {
       fb.className = 'feedback info';
-      fb.innerHTML = '<b>עוד לא סיימתם לענות.</b>' + shownHints();
+      setText(fb, '<b>עוד לא סיימתם לענות.</b>' + shownHints());
       return;
     }
     if (round.check(v)) return win();
@@ -110,7 +110,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
     if (tries >= (round.tries || 2)) return lose();
     if (hintIdx < hints().length) hintIdx++;
     fb.className = 'feedback warn';
-    fb.innerHTML = `<b>לא בדיוק, נסו שוב.</b> ${glue(msg || '')}${shownHints()}`;
+    setText(fb, `<b>לא בדיוק, נסו שוב.</b> ${msg || ''}${shownHints()}`);
     labelHint();
   }
 
@@ -136,7 +136,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
   function lose() {
     if (round.answer != null && widget.set) widget.set(round.answer);
     fb.className = 'feedback bad';
-    fb.innerHTML = `<b>הפתרון:</b> ${glue(round.explain || '')}`;
+    setText(fb, `<b>הפתרון:</b> ${round.explain || ''}`);
     finish(false);
   }
 

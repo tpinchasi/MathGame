@@ -373,7 +373,8 @@ const words = {
         });
       }
       if (t === 3) {
-        const B = rnd(6, 12), x = rnd(3, 10), A = 2 * B + x;
+        // the father is at least 22 years older than his son
+        const D = rnd(22, 35), B = rnd(6, 12), x = D - B, A = B + D;
         return num({
           prompt: `אבא בן ${A} ובנו בן ${B}. בעוד כמה שנים אבא יהיה מבוגר מבנו פי 2 בדיוק?`, answer: x,
           hints: ['הפרש הגילים בין אבא לבן לא משתנה אף פעם.', `ההפרש הוא ${A - B}. כשאבא מבוגר פי 2, גיל הבן שווה בדיוק להפרש.`], explain: `הבן יהיה בן ${A - B}, וזה יקרה בעוד ${M(`${A - B} − ${B} = ${x}`)} שנים.`,
@@ -408,7 +409,8 @@ const words = {
       });
     }
     if (t === 3) {
-      const x = pick([6, 8, 10, 12, 16]);
+      // mother is 1.5x years older than her daughter, so x ≥ 12 keeps the story possible
+      const x = pick([12, 14, 16, 18, 20]);
       return num({
         prompt: `לפני ${x} שנים אמא הייתה מבוגרת מבתה פי 4. היום היא מבוגרת ממנה פי 2. בת כמה הבת היום?`, answer: 1.5 * x,
         hints: ['הפרש הגילים לא משתנה. היום ההפרש שווה לגיל הבת. מה היה ההפרש לפני, ביחס לגיל הבת אז?', `לפני ${x} שנים ההפרש היה פי 3 מגיל הבת. כלומר גיל הבת היום הוא פי 3 מגילה אז, והיא גדלה ב־${x} שנים.`],
@@ -435,7 +437,7 @@ const words = {
 function makeSecret(L) {
   const [lo, hi] = [[10, 50], [10, 99], [100, 999]][L - 1], all = range(hi - lo + 1, i => lo + i);
   for (;;) {
-    const s = rnd(lo, hi), ds = digitsOf(s), pool = [], add = (text, pred) => pool.push([text, pred]);
+    const s = rnd(lo + 1, hi - 1), ds = digitsOf(s), pool = [], add = (text, pred) => pool.push([text, pred]);
     add(s % 2 ? 'אני מספר אי־זוגי.' : 'אני מספר זוגי.', n => n % 2 === s % 2);
     for (const k of [3, 4, 5, 6, 7, 9, 11]) if (s % k === 0) add(`אני מתחלק ב־${k} בלי שארית.`, n => n % k === 0);
     if (L > 1) {
@@ -450,10 +452,14 @@ function makeSecret(L) {
     if (L < 3) {
       const cmp = Math.sign(ds[0] - ds[1]);
       add(cmp > 0 ? 'ספרת העשרות שלי גדולה מספרת האחדות.' : cmp < 0 ? 'ספרת האחדות שלי גדולה מספרת העשרות.' : 'שתי הספרות שלי זהות.', n => Math.sign(Math.floor(n / 10) - (n % 10)) === cmp);
-      const a = Math.floor(s / 10) * 10 - (L === 2 ? 10 * rnd(0, 1) : 0);
+      // "בין a ל־b" includes both ends, but s is kept strictly inside so that reading it either way works
+      let a = Math.floor(s / 10) * 10 - (L === 2 ? 10 * rnd(0, 1) : 0);
+      if (a === s) a -= L === 2 ? 10 : 5;
       add(`אני בין ${a} ל־${a + (L === 2 ? 20 : 10)}.`, n => n >= a && n <= a + (L === 2 ? 20 : 10));
     } else {
-      const a = Math.floor(s / 100) * 100, distinct = new Set(ds).size;
+      let a = Math.floor(s / 100) * 100;
+      if (a === s) a -= 50;
+      const distinct = new Set(ds).size;
       add(`אני בין ${a} ל־${a + 100}.`, n => n >= a && n <= a + 100);
       add(`ספרת האחדות שלי היא ${ds[2]}.`, n => n % 10 === ds[2]);
       add(distinct === 3 ? 'כל הספרות שלי שונות זו מזו.' : 'יש לי ספרה שמופיעה יותר מפעם אחת.', n => (new Set(digitsOf(n)).size === 3) === (distinct === 3));
@@ -486,7 +492,7 @@ const secret = {
     const { s, clues, lo, hi } = makeSecret(L), ten = Math.floor(s / 10) * 10;
     return num({
       prompt: `אני מספר שלם בין ${lo} ל־${hi}. מי אני?`, visual: `<ul class="clues" dir="rtl" style="text-align:start">${clues.map(c => `<li>${c}</li>`).join('')}</ul>`, answer: s,
-      hints: ['התחילו מהרמז שמשאיר הכי מעט אפשרויות. רשמו את המספרים שמתאימים לו, ומחקו לפי שאר הרמזים.', `המספר נמצא בין ${ten} ל־${ten + 9}.`],
+      hints: ['התחילו מהרמז שמשאיר הכי מעט אפשרויות. רשמו את המספרים שמתאימים לו, ומחקו לפי שאר הרמזים.', `המספר הוא אחד מהמספרים ${ten} עד ${ten + 9}.`],
       explain: `המספר הוא ${s}. הוא היחיד שמתאים לכל הרמזים.`,
     });
   },

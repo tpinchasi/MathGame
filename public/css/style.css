@@ -156,6 +156,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* ---------- maths typography ---------- */
 .m { direction: ltr; unicode-bidi: isolate; display: inline-block; white-space: nowrap; }
+.nobr { white-space: nowrap; }
 .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 0.18em; font-weight: 700; }
 .frac > span:first-child { border-bottom: 2.5px solid currentColor; padding: 0 0.25em 1px; }
 .frac > span:last-child { padding: 1px 0.25em 0; }
