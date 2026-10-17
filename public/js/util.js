@@ -23,6 +23,26 @@ export const SYM = { '+': '+', '-': '−', '*': '×', '/': '÷' };
 // on the next. A word joiner after every maqaf that isn't followed by a space keeps them together.
 export const glue = html => html.replace(/־(?![\s\u2060])/g, '־\u2060');
 
+// A line may also break right after a maths span (an inline block), leaving the ")" or "." that
+// follows it alone at the start of the next line. Such punctuation is tied to the span.
+export function holdPunct(root) {
+  for (const m of root.querySelectorAll('.m')) {
+    const n = m.nextSibling, k = n && n.nodeType === 3 && n.data.match(/^\u2060?[).,:;?!]+/);
+    if (!k) continue;
+    const w = document.createElement('span');
+    w.className = 'nobr';
+    m.replaceWith(w);
+    w.append(m, k[0]);
+    n.data = n.data.slice(k[0].length);
+  }
+}
+
+// Fills an element with question text: both fixes above.
+export function setText(el, html) {
+  el.innerHTML = glue(html);
+  holdPunct(el);
+}
+
 // Math inside Hebrew text is always isolated as left-to-right.
 export const M = s => `<span class="m" dir="ltr">${s}</span>`;
 export const fr = (n, d) => `<span class="frac"><span>${n}</span><span>${d}</span></span>`;

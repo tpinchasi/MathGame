@@ -70,7 +70,7 @@ const addBrackets = {
       prompt: 'הוסיפו זוג סוגריים אחד כך שהשוויון יהיה נכון.',
       widget: parenPlace(e.nums, e.os, e.val), answer: [i, j], check: v => same(withPar(v), e.val),
       wrongMsg: v => `עם הסוגריים האלה יוצא ${fmt(withPar(v))}.`,
-      hints: [`בלי סוגריים התרגיל שווה ${fmt(flat)}, ולא ${e.val}. איזו פעולה צריכה לקרות מוקדם יותר?`, `הסוגריים צריכים להקיף ${j - i + 1} מספרים.`],
+      hints: [`${Number.isInteger(flat) && flat >= 0 ? `בלי סוגריים התרגיל שווה ${fmt(flat)}, ולא ${e.val}.` : `בלי סוגריים לא מקבלים ${e.val}.`} איזו פעולה צריכה לקרות מוקדם יותר?`, `הסוגריים צריכים להקיף ${j - i + 1} מספרים.`],
       explain: `${inline(e.T, e.val)}${chainHTML(e.st)}`,
     };
   },
@@ -88,9 +88,9 @@ const missing = {
     const T = e.T.map(t => (t.t === 'o' && hide.has(++k) ? { t: 'o', v: null } : t)), ans = e.os.filter((_, i) => hide.has(i));
     const val = v => evalTokens(fillOps(T, v));
     return {
-      prompt: 'השלימו את הפעולות החסרות כך שהשוויון יהיה נכון.',
+      prompt: L === 1 ? 'השלימו את הפעולה החסרה כך שהשוויון יהיה נכון.' : 'השלימו את הפעולות החסרות כך שהשוויון יהיה נכון.',
       widget: opFill(T, e.val), answer: ans, check: v => same(val(v), e.val), wrongMsg: v => `עם הפעולות האלה יוצא ${fmt(val(v))}.`,
-      hints: ['הסתכלו על התוצאה: האם היא גדולה או קטנה ביחס למספרים? כך אפשר לנחש אם יש כפל או חילוק.', `אחת הפעולות החסרות היא ${M(SYM[ans[0]])}.`],
+      hints: ['הסתכלו על התוצאה: האם היא גדולה או קטנה ביחס למספרים? כך אפשר לנחש אם יש כפל או חילוק.', `${L === 1 ? 'הפעולה החסרה' : 'אחת הפעולות החסרות'} היא ${M(SYM[ans[0]])}.`],
       explain: `${inline(e.T, e.val)}${chainHTML(e.st)}`,
     };
   },

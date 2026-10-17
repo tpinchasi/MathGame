@@ -175,7 +175,7 @@ const place = {
       if (t === 1) {
         const [e1, e2] = pick([[0, -2], [0, -3], [-1, -3], [1, -1], [1, -2]]), d = rnd(2, 9), c = rnd(2, 9) * 10 + rnd(2, 9);
         const T = d * 10 ** (e1 + 3) + c * 10 ** (e2 + 3), parts = shuffle([`${M(d)} ${PL[e1]}`, `${M(c)} ${PL[e2]}`]);
-        return dialRound(T, ex, `כוונו את החוגות למספר שיש בו ${andList(parts)}.`,
+        return dialRound(T, ex, `כוונו את החוגות למספר שמורכב מ־⁠${andList(parts)}.`,
           [`על חוגה אפשר לשים רק ספרה אחת. ${M(c)} ${PL[e2]} הם ${M(Math.floor(c / 10))} ${PL[e2 + 1]} ו־⁠${M(c % 10)} ${PL[e2]}.`, `המספר הוא ${N(thou(T))}.`],
           `${M(c)} ${PL[e2]} = ${N(thou(c * 10 ** (e2 + 3)))}, ועוד ${M(d)} ${PL[e1]}: ${N(thou(T))}`);
       }
@@ -184,8 +184,8 @@ const place = {
       do K = rnd(p === 1 ? 11 : 101, p === 1 ? 99 : 999); while (K % 10 === 0);
       const x = dec(K, p), ans = K * 10 ** (-e - p);
       return num({
-        prompt: `כמה ${PL[e]} יש ב־⁠${N(x)}?`, answer: ans,
-        hints: [`ביחידה אחת יש ${M(10 ** -e)} ${PL[e]}.`, `כפלו את ${N(x)} ב־⁠${M(10 ** -e)}.`],
+        prompt: `כמה ${PL[e]} יש ב־⁠${N(x)} בסך הכול?`, answer: ans,
+        hints: [`לא רק הספרה שבמקום ה${PL[e]}: ביחידה אחת יש ${M(10 ** -e)} ${PL[e]}.`, `כפלו את ${N(x)} ב־⁠${M(10 ** -e)}.`],
         explain: `${M(`${nf(x)} × ${10 ** -e} = ${ans}`)}, לכן ב־⁠${N(x)} יש ${M(ans)} ${PL[e]}.`,
       });
     }
@@ -194,7 +194,7 @@ const place = {
       let cs;
       do cs = ps.map((e, i) => (i && Math.random() < 0.6 ? rnd(11, 49) : rnd(2, 9))); while (cs.every(c => c < 10) || cs.some(c => c % 10 === 0));
       const T = ps.reduce((s, e, i) => s + cs[i] * 10 ** (e + 3), 0), dParts = ps.map((e, i) => nf(thou(cs[i] * 10 ** (e + 3))));
-      return dialRound(T, ex, `כוונו את החוגות למספר שיש בו ${andList(ps.map((e, i) => `${M(cs[i])} ${PL[e]}`))}.`,
+      return dialRound(T, ex, `מחברים ${andList(ps.map((e, i) => `${M(cs[i])} ${PL[e]}`))}. איזה מספר מתקבל? כוונו אליו את החוגות.`,
         ['כתבו כל חלק כמספר עשרוני. למשל 15 עשיריות הן 1.5, ו־34 מאיות הן 0.34.', `חברו: ${M(dParts.join(' + '))}.`],
         `${M(`${dParts.join(' + ')} = ${nf(thou(T))}`)}`);
     }
@@ -574,6 +574,7 @@ const moverRound = ({ x, shift, prompt, hints, explain }) => {
   const w = pointMover(x, shift), y = cl(x * 10 ** shift);
   return { prompt, widget: w, answer: w.target, check: v => near(v, y), hints, explain };
 };
+const zeros = n => (n === 1 ? 'אפס אחד' : `${M(n)} אפסים`);
 const opOf = s => (s > 0 ? `× ${10 ** s}` : `÷ ${10 ** -s}`);
 const dirOf = s => `${places(Math.abs(s))} ${s > 0 ? 'ימינה' : 'שמאלה'}`;
 const UNITS = [['מ״ל', 'ליטר', -3], ['ליטר', 'מ״ל', 3], ['גרם', 'ק״ג', -3], ['ק״ג', 'גרם', 3], ['ס״מ', 'מטר', -2], ['מטר', 'ס״מ', 2], ['מ״מ', 'ס״מ', -1], ['ס״מ', 'מ״מ', 1], ['מ״ג', 'גרם', -3]];
@@ -596,13 +597,13 @@ const shift = {
       if (t === 2) {
         return dAns({
           prompt: 'פתרו.', ans: y, pre: `${nf(x)} ${opOf(s)}${EQ}`,
-          hints: [`ב${s > 0 ? 'כפל' : 'חילוק'} הנקודה זזה ${s > 0 ? 'ימינה' : 'שמאלה'}.`, `ב־⁠${M(10 ** Math.abs(s))} יש ${M(Math.abs(s))} אפסים, לכן הנקודה זזה ${dirOf(s)}.`],
+          hints: [`ב${s > 0 ? 'כפל' : 'חילוק'} הנקודה זזה ${s > 0 ? 'ימינה' : 'שמאלה'}.`, `ב־⁠${M(10 ** Math.abs(s))} יש ${zeros(Math.abs(s))}, לכן הנקודה זזה ${dirOf(s)}.`],
           explain: `${M(`${nf(x)} ${opOf(s)} = ${nf(y)}`)}: הנקודה זזה ${dirOf(s)}.`,
         });
       }
       return moverRound({
         x, shift: s, prompt: `הזיזו את הנקודה כדי לקבל את התוצאה של ${M(`${nf(x)} ${opOf(s)}`)}.`,
-        hints: [`ב${s > 0 ? 'כפל' : 'חילוק'} הנקודה זזה ${s > 0 ? 'ימינה' : 'שמאלה'}.`, `ב־⁠${M(10 ** Math.abs(s))} יש ${M(Math.abs(s))} אפסים, לכן הנקודה זזה ${dirOf(s)}.`],
+        hints: [`ב${s > 0 ? 'כפל' : 'חילוק'} הנקודה זזה ${s > 0 ? 'ימינה' : 'שמאלה'}.`, `ב־⁠${M(10 ** Math.abs(s))} יש ${zeros(Math.abs(s))}, לכן הנקודה זזה ${dirOf(s)}.`],
         explain: `${M(`${nf(x)} ${opOf(s)} = ${nf(y)}`)}: הנקודה זזה ${dirOf(s)}.`,
       });
     }
@@ -748,7 +749,7 @@ const mulDec = {
       return dAns({
         prompt: `ידוע ש־⁠${M(`${A} × ${B} = ${P}`)}. איזה מספר חסר?`, ans: y, line: X => M(`${nf(x)} × ${X} = ${nf(r)}`),
         hints: [`הספרות של הגורם החסר הן הספרות של ${M(B)}. נשאר לקבוע איפה הנקודה.`, `בגורם הראשון ${afterPt(i)} אחרי הנקודה, ובתוצאה ${M(fx(P, i + j))} יש ${afterPt(i + j)}. לגורם החסר יש ${afterPt(j)} אחרי הנקודה.`],
-        explain: `${M(`${nf(x)} × ${nf(y)} = ${nf(r)}`)}: ב־⁠${M(fx(P, i + j))} יש ${afterPt(i + j)} אחרי הנקודה, ${i ? `${M(i)} מהן מהגורם הראשון` : 'ובגורם הראשון אין בכלל'}, אז לחסר יש ${afterPt(j)} אחרי הנקודה.`,
+        explain: `${M(`${nf(x)} × ${nf(y)} = ${nf(r)}`)}: ב־⁠${M(fx(P, i + j))} יש ${afterPt(i + j)} אחרי הנקודה, ${i ? `${i === 1 ? 'אחת' : M(i)} מהן מהגורם הראשון` : 'ובגורם הראשון אין בכלל'}, אז לחסר יש ${afterPt(j)} אחרי הנקודה.`,
       });
     }
     if (t === 1) {
@@ -919,10 +920,10 @@ const convert = {
         explain: `${M(`${nf(p)}% = ${nf(p)} ÷ 100 = ${nf(x)}`)}`,
       });
     }
-    const x = pick([dec(decK(2, 101, 399), 2), dec(rnd(1, 9), 3), dec(decK(3, 1, 99), 3), dec(rnd(11, 40), 1)]), p = cl(x * 100);
+    const x = pick([dec(decK(2, 101, 399), 2), dec(rnd(1, 9), 3), dec(decK(3, 1, 99), 3), dec(decK(1, 11, 39), 1)]), p = cl(x * 100);
     return dAns({
       prompt: 'כתבו את המספר העשרוני כאחוז.', ans: p, line: B => M(`${nf(x)}${EQ}${B}%`),
-      hints: ['כופלים ב־100: הנקודה זזה 2 מקומות ימינה.', x > 1 ? `${N(1)} הוא ${pctS(100)}, לכן התשובה יותר מ־100.` : `${N(0.01)} הוא ${pctS(1)}, לכן התשובה קטנה מ־1.`],
+      hints: ['כופלים ב־100: הנקודה זזה 2 מקומות ימינה.', x > 1 ? `${N(1)} הוא ${pctS(100)}, לכן התשובה יותר מ־100.` : x < 0.01 ? `${N(0.01)} הוא ${pctS(1)}, ו־⁠${N(x)} קטן ממנו, לכן התשובה קטנה מ־1.` : `${N(0.1)} הוא ${pctS(10)}, ו־⁠${N(x)} קטן ממנו, לכן התשובה קטנה מ־10.`],
       explain: `${M(`${nf(x)} × 100 = ${nf(p)}`)}, לכן ${M(`${nf(x)} = ${nf(p)}%`)}`,
     });
   },
@@ -951,6 +952,7 @@ const pctHints = (p, Q) => ({
   25: [`${pctS(25)} הם רבע.`, `${M(`${Q} ÷ 4`)}`],
   75: [`${pctS(75)} הם שלושה רבעים.`, `רבע מ־⁠${M(Q)} הוא ${N(Q / 4)}. כמה הם שלושה רבעים?`],
   1: [`${pctS(1)} הוא חלק אחד מתוך 100.`, `${M(`${Q} ÷ 100`)}`],
+  10: [`${pctS(10)} הם חלק אחד מתוך 10.`, `${M(`${Q} ÷ 10`)}`],
   5: [`${pctS(5)} הם חצי מ־⁠${pctS(10)}.`, `${pctS(10)} מ־⁠${M(Q)} הם ${N(Q / 10)}.`],
 }[p] || [`מצאו קודם ${pctS(10)}: מחלקים ב־10.`, `${pctS(10)} מ־⁠${M(Q)} הם ${N(Q / 10)}. כמה הם ${pctS(p)}?`]);
 const pctOf = {
@@ -985,7 +987,7 @@ const pctOf = {
       if (t === 0) {
         let p;
         do p = rnd(2, 98); while (p % 5 === 0 && Math.random() < 0.7);
-        const Q = rnd(2, 50) * pick([2, 4, 5, 10]), ans = cl((Q * p) / 100), [prompt, u] = pick(CTX.slice(0, 3))(Q, p);
+        const Q = rnd(2, 50) * pick([2, 4, 5, 10]), ans = cl((Q * p) / 100), [prompt, u] = pick([CTX[0], CTX[2]])(Q, p);
         return dAns({
           prompt, ans, line: B => `${B} ${u}`,
           hints: [`מצאו ${pctS(1)}: ${M(`${Q} ÷ 100 = ${nf(Q / 100)}`)}.`, `עכשיו כפלו ב־⁠${M(p)}: ${M(`${nf(Q / 100)} × ${p}`)}.`],
@@ -1033,7 +1035,9 @@ const pctOf = {
       });
     }
     if (u === 2) {
-      const a = pick([20, 40, 50, 60, 30, 80, 25, 75]), b = pick([10, 20, 25, 50, 40, 30, 15, 5]), ans = cl((a * b) / 100);
+      let a, b;
+      do [a, b] = [pick([20, 40, 50, 60, 30, 80, 25, 75]), pick([10, 20, 25, 50, 40, 30, 15, 5])]; while ((a * b) % 100); // whole students out of 100
+      const ans = (a * b) / 100;
       return dAns({
         prompt: `${pctS(a)} מתלמידי בית הספר משתתפים בחוג המדע, ו־⁠${pctS(b)} ממשתתפי החוג בונים רובוטים. כמה אחוזים מכל תלמידי בית הספר בונים רובוטים?`,
         ans, line: B => M(`${B}%`),
@@ -1114,7 +1118,7 @@ const fdiv = {
       do [[c, d], k] = [red(8), rnd(3, 12)]; while ((k * c) % d === 0 || c < 2);
       return num({
         prompt: `בבקבוק יש ${showFrac(k * c, d)} ליטר תמיסה. כל מבחנה מכילה ${F(c, d)} ליטר. כמה מבחנות אפשר למלא?`, answer: k,
-        hints: [`זה תרגיל חילוק: ${M(`${showFrac(k * c, d)} ÷ ${fr(c, d)}`)}. הפכו קודם את המספר המעורב לשבר.`, `${M(`${fr(k * c, d)} × ${fr(d, c)}`)}`],
+        hints: [`זה תרגיל חילוק: ${M(`${showFrac(k * c, d)} ÷ ${fr(c, d)}`)}.${k * c > d ? ' הפכו קודם את המספר המעורב לשבר.' : ''}`, `${M(`${fr(k * c, d)} × ${fr(d, c)}`)}`],
         explain: `${M(`${fr(k * c, d)} ÷ ${fr(c, d)} = ${fr(k * c, d)} × ${fr(d, c)} = ${k}`)} מבחנות. (בעצם: ${M(k * c)} חלקים של ${F(1, d)}, ובכל מבחנה ${M(c)} חלקים.)`,
       });
     }
@@ -1176,7 +1180,7 @@ const boss = {
       if (t === 2) {
         const [u1, u2, s] = pick(UNITS), x = s > 0 ? someDec(1, 2, 9) : someDec(0, 1, s === -1 ? 90 : 2500), y = cl(x * 10 ** s), [big, small] = s > 0 ? [u1, u2] : [u2, u1];
         return dAns({
-          prompt: `על המשקל כתוב ${N(x)} ${u1}, אבל החשבונאי מחק את הנקודה. כמה ${u2} זה?`, ans: y, line: B => `${N(x)} ${u1} = ${B} ${u2}`,
+          prompt: `על מכשיר המדידה כתוב ${N(x)} ${u1}. כמה ${u2} זה? אל תתנו לחשבונאי נקודה לבלבל אתכם עם הנקודה!`, ans: y, line: B => `${N(x)} ${u1} = ${B} ${u2}`,
           hints: [`ב־⁠${M(1)} ${big} יש ${M(10 ** Math.abs(s))} ${small}.`, `${s > 0 ? 'כופלים' : 'מחלקים'} ב־⁠${M(10 ** Math.abs(s))}.`],
           explain: `${M(`${nf(x)} ${opOf(s)} = ${nf(y)}`)}`,
         });
@@ -1200,7 +1204,7 @@ const boss = {
       if (t === 0) {
         const n = rnd(3, 8), K = decK(1, 12, 95), price = dec(K, 1), S = Math.ceil((n * price) / 50) * 50 + pick([0, 50, 100]), ans = cl(S - n * price);
         return dAns({
-          prompt: `קנו ${M(n)} משקפי מגן במחיר ${N(price)} ש״ח כל אחד, ושילמו בשטרות של ${M(S)} ש״ח. כמה עודף קיבלו?`, ans, line: B => `${B} ש״ח`,
+          prompt: `קנו ${M(n)} משקפי מגן במחיר ${N(price)} ש״ח כל אחד, ושילמו ${M(S)} ש״ח. כמה עודף קיבלו?`, ans, line: B => `${B} ש״ח`,
           hints: ['קודם מצאו כמה עלו כל המשקפיים, ואחר כך חסרו מהסכום ששילמו.', `${M(`${n} × ${nf(price)} = ${nf(cl(n * price))}`)}`],
           explain: `${M(`${n} × ${nf(price)} = ${nf(cl(n * price))}`)}, ${M(`${S} − ${nf(cl(n * price))} = ${nf(ans)}`)} ש״ח.`,
         });
@@ -1215,7 +1219,7 @@ const boss = {
       }
       if (t === 2) {
         let a, b, c, d, k;
-        do [[a, b], [c, d], k] = [red(6), red(8), rnd(2, 6)]; while (b === d);
+        do [[a, b], [c, d], k] = [red(6), red(8), rnd(2, 6)]; while (b === d || k * a * d < b * c);
         // k bottles of a/b litre are poured into cups of c/d litre: (k·a/b) ÷ (c/d)
         const n = k * a * d, dd = b * c;
         return ratAns({

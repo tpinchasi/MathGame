@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<meta charset="utf-8">
+<title>samples</title>
+<link rel="stylesheet" href="../public/css/style.css">
+<pre id="out" dir="rtl">running…</pre>
+<div id="sandbox" style="position:absolute;left:-9999px"></div>
+<script type="module">
+// Prints generated rounds as plain text, for proofreading the questions.
+// usage: samples.html?file=zoo/add.js&ch=0&level=3&n=10   (ch and level may be left out for all)
+const q = new URLSearchParams(location.search), out = document.getElementById('out'), sandbox = document.getElementById('sandbox');
+// text as the browser shows it (a regex would also swallow a bare "<" written inside maths)
+const t = s => {
+  const d = document.createElement('div');
+  d.innerHTML = (s || '').replace(/<br\s*\/?>/g, ' / ');
+  d.querySelectorAll('span, div, b, i').forEach(e => e.append(' '));
+  return d.textContent.replace(/[\s⁠]+/g, ' ').trim();
+};
+const lines = [];
+try {
+  const world = (await import('../public/js/worlds/' + q.get('file'))).default, n = +q.get('n') || 8;
+  const chs = q.get('ch') != null && q.get('ch') !== '' ? [+q.get('ch')] : world.challenges.map((_, i) => i);
+  const lvs = q.get('level') ? [+q.get('level')] : [1, 2, 3];
+  for (const i of chs) {
+    const ch = world.challenges[i];
+    lines.push(`\n######## ${i}. ${ch.title} (${ch.id})\nINTRO: ${t(ch.intro)}`);
+    for (const L of lvs) {
+      lines.push(`\n==== level ${L}`);
+      for (let k = 0; k < n; k++) {
+        const r = ch.gen(L), self = typeof r.widget === 'function';
+        const w = self ? r.widget({ solved() {}, mistake() {} }) : r.widget;
+        sandbox.innerHTML = '';
+        sandbox.append(w.el);
+        const opts = [...w.el.querySelectorAll('.opt')].map((o, j) => `[${j}] ${t(o.innerHTML)}`).join('  ');
+        const vis = r.visual ? t(r.visual).slice(0, 160) : '';
+        lines.push(`-- Q: ${t(r.prompt)}` + (vis ? `\n   PICTURE TEXT: ${vis}` : '') + (opts ? `\n   OPTIONS: ${opts}` : `\n   WIDGET TEXT: ${t(w.el.innerHTML).slice(0, 200)}`) +
+          `\n   ANSWER: ${self ? '(self-checking widget) ' + (r.sig || '') : JSON.stringify(r.answer)}` +
+          `\n   HINTS: ${(r.hints || []).map(t).join(' | ')}\n   SOLUTION: ${t(r.explain)}`);
+      }
+    }
+  }
+} catch (e) {
+  lines.push('CRASH ' + e.message + '\n' + e.stack);
+}
+out.textContent = lines.join('\n');
+document.title = 'done';
+</script>
+</html>
