@@ -13,10 +13,12 @@ for wid, count in worlds:
                 page.logs.clear()
                 page.js("location.hash = '#/x'; location.hash = '#/play/%s/%d/%d'" % (wid, i, lvl))
                 time.sleep(0.12)
-                info = json.loads(page.js("""JSON.stringify({play: !!document.querySelector('.play'), prompt: (document.querySelector('.prompt') || {}).textContent || '',
+                info = json.loads(page.js("""JSON.stringify({play: !!document.querySelector('.play'), junk: /\\b(null|undefined|NaN)\\b|\\[object/.test((document.querySelector('.play') || document.body).innerText), prompt: (document.querySelector('.prompt') || {}).textContent || '',
                   widget: !!document.querySelector('.wbox > *'), over: document.documentElement.scrollWidth - window.innerWidth,
                   wide: (() => { const b = document.querySelector('.p-body'); if (!b) return 0; const c = b.getBoundingClientRect(); return [...document.querySelectorAll('.p-body *')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > c.right + 1 || r.left < c.left - 1); }).length; })()})"""))
                 problems = [l for l in page.logs if l.startswith("EXCEPTION")]
+                if info["junk"]:
+                    problems.append("null/undefined/NaN shown on screen")
                 if not info["play"] or not info["prompt"] or not info["widget"]:
                     problems.append("empty screen")
                 if info["over"] > 0 or info["wide"]:

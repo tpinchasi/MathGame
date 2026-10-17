@@ -331,6 +331,42 @@ button.tk.blank.set { border-style: solid; color: var(--pri); }
 .clues { margin: 0; padding-inline-start: 1.3em; line-height: 1.8; }
 .eqs { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 1.5rem; font-weight: 700; }
 
+/* ---------- boss fight (battle.js): the player on the right, the accountant on the left ---------- */
+.battle {
+  position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;
+  height: 128px; margin-bottom: 12px; padding: 8px 16px 10px; border-radius: 22px; overflow: hidden;
+  background: var(--card); border: 1px solid var(--line);
+}
+.bt-side { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 112px; }
+.bt-boss { width: 62px; }
+.bt-ship { width: 112px; }
+.bt-ship svg { transform: scaleX(-1); } /* the ship faces the accountant */
+.bt-emoji { font-size: 54px; line-height: 1; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+.bt-hp { width: 92px; height: 10px; border-radius: 6px; background: rgba(0, 0, 0, 0.35); overflow: hidden; }
+.bt-hp i { display: block; height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd166); transition: width 0.5s; }
+.bt-hearts { display: flex; gap: 4px; }
+.bt-heart { width: 20px; fill: #ff6b6b; }
+.bt-heart.off { fill: none; stroke: #ff6b6b; stroke-width: 2; opacity: 0.5; }
+.bt-fx { position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; }
+.bt-shot, .bt-bolt { position: absolute; top: 34%; font-size: 30px; line-height: 1; opacity: 0; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+.bt-beam { position: absolute; top: 46%; right: 26%; height: 5px; border-radius: 3px; background: #5eead4; box-shadow: 0 0 10px #5eead4; }
+.to-foe .bt-shot { animation: fly-left 0.42s ease-in forwards; }
+.to-foe .bt-beam { animation: beam 0.42s ease-out forwards; }
+.to-me .bt-bolt { animation: fly-right 0.42s ease-in forwards; }
+@keyframes fly-left { 0% { right: 22%; opacity: 1; } 90% { right: 72%; opacity: 1; } 100% { right: 74%; opacity: 0; } }
+@keyframes fly-right { 0% { left: 22%; opacity: 1; } 90% { left: 72%; opacity: 1; } 100% { left: 74%; opacity: 0; } }
+@keyframes beam { 0% { width: 0; opacity: 1; } 75% { width: 50%; opacity: 1; } 100% { width: 50%; opacity: 0; } }
+.hurt { animation: hurt 0.5s; }
+@keyframes hurt { 0%, 100% { transform: none; filter: none; } 20% { transform: translateX(-7px); filter: brightness(2.2); } 45% { transform: translateX(7px); } 70% { transform: translateX(-4px); } }
+.bt-boss.down { animation: knocked 1s forwards; }
+@keyframes knocked { to { transform: rotate(-80deg) translateY(18px) scale(0.7); opacity: 0.3; } }
+.bt-hero.down { opacity: 0.35; filter: grayscale(1); }
+.bt-say { display: none; }
+.bt-say.on {
+  display: block; position: absolute; z-index: 2; top: 50%; right: 0; left: 0; transform: translateY(-50%); padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.62); text-align: center; font-weight: 900; font-size: 1.1rem; color: var(--accent); animation: pop 0.5s;
+}
+
 /* ---------- result, station, parents ---------- */
 .result { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 30px 0; }
 .result h2 { font-size: 2.2rem; font-weight: 900; color: var(--accent); }

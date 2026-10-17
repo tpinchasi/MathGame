@@ -22,20 +22,22 @@ const decor = {
   lab: el => scatter(el, 22, () => `<i style="left:${r(0, 100)}%;--s:${r(8, 26)}px;animation-duration:${r(9, 20)}s;animation-delay:${r(-20, 0)}s"></i>`),
 };
 
-// Freed animals (zoo): each enclosure frees 8 animals that belong there, in the order of the zoo's
-// worlds (monkeys, elephants, penguins, zebras, owls). Emoji up to Unicode 11, so older phones show them.
+// Freed animals (zoo): each enclosure frees 8 kinds of the animal it is named after, in the order of
+// the zoo's worlds (monkeys, elephants, penguins, zebras, owls). Emoji has one picture for most of
+// them, so each kind gets its own name and its own background colour.
 const ANIMALS = [
-  // monkeys: monkeys and their jungle neighbours
-  ['🐒', 'קוף'], ['🐵', 'קוף קטן'], ['🦍', 'גורילה'], ['🙈', 'קוף ביישן'], ['🦜', 'תוכי'], ['🐯', 'נמר'], ['🐍', 'נחש'], ['🦎', 'לטאה'],
-  // elephants: the savanna
-  ['🐘', 'פיל'], ['🦒', 'ג׳ירפה'], ['🦁', 'אריה'], ['🦏', 'קרנף'], ['🦛', 'היפופוטם'], ['🐆', 'ברדלס'], ['🐃', 'תאו'], ['🐊', 'תנין'],
-  // penguins: ice and sea
-  ['🐧', 'פינגווין'], ['🐬', 'דולפין'], ['🐳', 'לווייתן'], ['🦈', 'כריש'], ['🐙', 'תמנון'], ['🦀', 'סרטן'], ['🐠', 'דג טרופי'], ['🐢', 'צב ים'],
-  // zebras: hoofed animals of the plains
-  ['🦓', 'זברה'], ['🐎', 'סוס'], ['🦌', 'אייל'], ['🐪', 'גמל'], ['🦙', 'לאמה'], ['🦘', 'קנגורו'], ['🐐', 'עז'], ['🐑', 'כבשה'],
-  // owls: birds
-  ['🦉', 'ינשוף'], ['🦅', 'עיט'], ['🦚', 'טווס'], ['🦢', 'ברבור'], ['🦆', 'ברווז'], ['🦃', 'תרנגול הודו'], ['🐓', 'תרנגול'], ['🐤', 'אפרוח'],
+  // monkeys and apes
+  ['🐵', 'שימפנזה'], ['🦍', 'גורילה'], ['🐒', 'אורנגאוטן'], ['🐒', 'בבון'], ['🐒', 'גיבון'], ['🐒', 'מקוק'], ['🐒', 'קוף עכביש'], ['🐒', 'קוף קפוצ׳ין'],
+  // elephants
+  ['🐘', 'פיל אפריקאי'], ['🐘', 'פיל יער אפריקאי'], ['🐘', 'פיל אסייתי'], ['🐘', 'פיל הודי'], ['🐘', 'פיל סרי לנקה'], ['🐘', 'פיל סומטרה'], ['🐘', 'פיל בורנאו הגמד'], ['🐘', 'פילון'],
+  // penguins
+  ['🐧', 'פינגווין קיסרי'], ['🐧', 'פינגווין מלכותי'], ['🐧', 'פינגווין אדלי'], ['🐧', 'פינגווין ג׳נטו'], ['🐧', 'פינגווין מקרוני'], ['🐧', 'פינגווין אפריקאי'], ['🐧', 'פינגווין גלפגוס'], ['🐧', 'פינגווין גמדי'],
+  // zebras
+  ['🦓', 'זברת מישורים'], ['🦓', 'זברת גרנט'], ['🦓', 'זברת צ׳פמן'], ['🦓', 'זברת בורצ׳ל'], ['🦓', 'זברת גרווי'], ['🦓', 'זברת הרים'], ['🦓', 'זברת הכף'], ['🦓', 'סייח זברה'],
+  // owls
+  ['🦉', 'ינשוף שלג'], ['🦉', 'תנשמת'], ['🦉', 'אוח עיטי'], ['🦉', 'לילית'], ['🦉', 'ינשוף עציים'], ['🦉', 'ינשוף שדות'], ['🦉', 'ינשוף מדבר'], ['🦉', 'שעיר'],
 ];
+const ANIMAL_BG = ['#fff3c4', '#ffd6e0', '#cdeffd', '#d9f7c8', '#e6dcff', '#ffe0c2', '#c9f2ec', '#f6d6f7'];
 
 // Discovered elements (lab): the first 40 of the periodic table.
 const ELEMENTS = [
@@ -67,7 +69,9 @@ export const GAMES = [
     ],
     storyBtn: 'פותחים את השער!',
     hub: { name: 'מרכז המבקרים', btn: '🎟️ מרכז המבקרים' },
-    prize: i => ({ art: badge(ANIMALS[i % ANIMALS.length][0], '#fff3c4'), name: ANIMALS[i % ANIMALS.length][1] }),
+    // the boss fight: the enclosure's animal throws its favourite thing at the accountant
+    fighter: w => ({ hero: `<span class="bt-emoji">${w.icon}</span>`, shot: { zadd: '🍌', zmul: '💦', zfrac: '🐟', zgeo: '🥕', zpuz: '⭐' }[w.id] || '⭐' }),
+    prize: i => ({ art: badge(ANIMALS[i % ANIMALS.length][0], ANIMAL_BG[i % 8]), name: ANIMALS[i % ANIMALS.length][1] }),
     lockedPrize: () => badge('', '', true),
     prizeLine: name => `שחררתם חיה חדשה: ${name}! היא מחכה לכם במרכז המבקרים.`,
     bossLine: w => `${w.boss} הובס! ${w.name} פתוח לגמרי.`,
@@ -86,6 +90,8 @@ export const GAMES = [
     ],
     storyBtn: 'יוצאים לדרך!',
     hub: { name: 'תחנת החלל', btn: '🚀 תחנת החלל' },
+    // the boss fight: the ship, with the upgrades earned so far, fires its laser
+    fighter: (w, done) => ({ hero: `<div class="bt-ship">${ship(done)}</div>`, shot: null }),
     prize: i => ({ art: alien(i), name: alienName(i) }),
     lockedPrize: i => alien(i, true),
     prizeLine: name => `שחררתם את ${name}! מחכה לכם בתחנת החלל.`,
@@ -106,6 +112,8 @@ export const GAMES = [
     ],
     storyBtn: 'לובשים חלוק ומתחילים!',
     hub: { name: 'ארון הציוד', btn: '🔬 ארון הציוד' },
+    // the boss fight: the lab's instrument shoots sparks at the accountant
+    fighter: w => ({ hero: `<span class="bt-emoji">${w.icon}</span>`, shot: '✨' }),
     prize: i => ({ art: element(i), name: ELEMENTS[i % ELEMENTS.length][1] }),
     lockedPrize: i => element(i, true),
     prizeLine: name => `גיליתם יסוד חדש: ${name}! הוא נוסף לטבלה בארון הציוד.`,

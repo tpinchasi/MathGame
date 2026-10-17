@@ -5,6 +5,8 @@ import { play, ROUNDS, PASS } from './engine.js';
 import { h, setText } from './util.js';
 import { accountant } from './art.js';
 import { sfx } from './sound.js';
+import { battle } from './battle.js';
+import { music, musicChanged } from './music.js';
 
 const app = document.getElementById('app');
 // ?dev opens every challenge and level, for testing
@@ -60,6 +62,12 @@ function route() {
   return last ? mapScreen(last) : gradesScreen();
 }
 
+function musicBtn() {
+  const label = () => (st.flag('music') === false ? '🎵 מוזיקה כבויה' : '🎵 מוזיקה');
+  const b = h('button', { type: 'button', class: 'btn ghost', onclick: () => { st.flag('music', st.flag('music') === false); b.textContent = label(); musicChanged(); } }, label());
+  return b;
+}
+
 function muteBtn() {
   const label = () => (st.flag('mute') ? '🔇 צלילים כבויים' : '🔊 צלילים');
   const b = h('button', { type: 'button', class: 'btn ghost', onclick: () => { st.flag('mute', !st.flag('mute')); b.textContent = label(); } }, label());
@@ -70,6 +78,7 @@ const logo = () => h('div', { class: 'logo' }, h('span', { class: 'logo-art', ht
 
 function gradesScreen() {
   useGame(null);
+  music('menu-space');
   app.innerHTML = '';
   app.append(
     h('header', { class: 'top' }, logo()),
@@ -81,7 +90,7 @@ function gradesScreen() {
           h('b', {}, g.grades),
           h('span', {}, g.name),
           h('small', {}, `⭐ ${sum(chOf(g))} / ${chOf(g).length * 3}`))))),
-    h('nav', { class: 'map-nav' }, muteBtn(), h('a', { class: 'btn ghost', href: '#/parents' }, 'להורים')));
+    h('nav', { class: 'map-nav' }, musicBtn(), muteBtn(), h('a', { class: 'btn ghost', href: '#/parents' }, 'להורים')));
 }
 
 const storyKey = g => (g.id === 'space' ? 'story' : `story-${g.id}`);
@@ -95,6 +104,7 @@ function story(g) {
 
 function mapScreen(g) {
   useGame(g);
+  music(`menu-${g.id}`);
   app.innerHTML = '';
   app.append(
     h('header', { class: 'top' }, logo(), total(chOf(g))),
@@ -108,6 +118,7 @@ function mapScreen(g) {
         h('span', { class: 'pc-stars' }, `⭐ ${sum(w.challenges)} / ${w.challenges.length * 3}`)))),
     h('nav', { class: 'map-nav' },
       h('a', { class: 'btn', href: `#/hub/${g.id}` }, g.hub.btn),
+      musicBtn(),
       muteBtn(),
       h('a', { class: 'btn ghost', href: '#/parents' }, 'להורים')));
   if (!st.flag(storyKey(g)) && !DEV) story(g);
@@ -141,6 +152,7 @@ function levelPicker(w, i) {
 
 function worldScreen(g, w) {
   useGame(g);
+  music(w.id);
   const last = w.challenges.length - 1;
   app.innerHTML = '';
   app.append(
@@ -159,17 +171,19 @@ function playScreen(g, w, i, lvl) {
   const ch = w.challenges[i];
   if (!unlocked(w, i) || (!DEV && lvl > st.level(ch.id) + 1)) return go(`#/world/${w.id}`);
   useGame(g);
-  const root = h('div', { class: 'play' });
+  const root = h('div', { class: 'play' }), boss = i === w.challenges.length - 1;
+  music(boss ? `boss-${g.id}` : w.id);
   app.innerHTML = '';
   app.append(root);
   cleanup = play(root, {
     ch, level: lvl,
+    battle: boss ? battle({ ...g.fighter(w, g.worlds.map(bossBeaten)), color: w.color, boss: w.boss }) : null,
     onExit: () => go(`#/world/${w.id}`),
     onHelp: () => intro(ch),
-    onDone: correct => {
+    onDone: (correct, played) => {
       cleanup();
       cleanup = null;
-      resultScreen(g, w, i, lvl, correct);
+      resultScreen(g, w, i, lvl, correct, played);
     },
   });
   if (!st.introSeen(ch.id) && !DEV) {
@@ -183,8 +197,9 @@ function playScreen(g, w, i, lvl) {
 const prizeList = g => (g.id === 'space' ? chOf(g) : g.worlds.flatMap(w => w.challenges.slice(0, -1)));
 const prizeOf = (g, ch) => g.prize(prizeList(g).indexOf(ch));
 
-function resultScreen(g, w, i, lvl, correct) {
-  const ch = w.challenges[i], passed = correct >= PASS, first = st.record(ch.id, lvl, correct, ROUNDS, passed);
+// played: rounds actually played (a boss fight can end before the fifth)
+function resultScreen(g, w, i, lvl, correct, played = ROUNDS) {
+  const ch = w.challenges[i], passed = correct >= PASS, first = st.record(ch.id, lvl, correct, played, passed);
   const boss = i === w.challenges.length - 1, nextCh = w.challenges[i + 1];
   if (first) sfx('star');
   const prize = !boss && prizeOf(g, ch);
@@ -195,9 +210,9 @@ function resultScreen(g, w, i, lvl, correct) {
   window.scrollTo(0, 0);
   app.innerHTML = '';
   app.append(h('div', { class: 'result' },
-    h('h2', {}, passed ? 'כל הכבוד!' : 'כמעט!'),
+    h('h2', {}, boss ? (passed ? 'ניצחתם בקרב!' : `${w.boss} ניצח הפעם`) : passed ? 'כל הכבוד!' : 'כמעט!'),
     h('div', { class: 'big-stars' + (first ? ' pop' : '') }, stars(st.level(ch.id))),
-    h('p', { class: 'score' }, `${correct} מתוך ${ROUNDS} נכונות`),
+    h('p', { class: 'score' }, `${correct} מתוך ${played} נכונות`),
     passed ? null : h('p', {}, `כדי לעבור רמה צריך ${PASS} נכונות. עוד ניסיון?`),
     reward,
     h('div', { class: 'result-btns' },
@@ -210,6 +225,7 @@ function resultScreen(g, w, i, lvl, correct) {
 // Where the prizes are kept: the space station, the zoo's visitor centre or the lab's equipment cupboard.
 function hubScreen(g) {
   useGame(g);
+  music(`menu-${g.id}`);
   const done = g.worlds.map(bossBeaten), n = done.filter(Boolean).length;
   app.innerHTML = '';
   app.append(

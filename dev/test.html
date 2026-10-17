@@ -38,6 +38,7 @@ try {
             const wd = self ? r.widget({ solved: () => (solved = true), mistake: () => mistakes++ }) : r.widget;
             sandbox.innerHTML = '';
             sandbox.append(wd.el);
+            if (/undefined|NaN|null|\[object/.test(wd.el.textContent + ' ' + wd.el.innerHTML.replace(/<[^>]*>/g, ' '))) throw new Error('bad text in the answer widget: ' + wd.el.textContent.slice(0, 200));
             if (self) {
               if (!wd.auto) throw new Error('self widget without auto()');
               wd.auto();

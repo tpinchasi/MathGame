@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<meta charset="utf-8">
+<title>music check</title>
+<pre id="out" dir="ltr">running…</pre>
+<script type="module">
+// Renders every tune offline for 16 seconds and reports its loudness, so a broken or
+// clipping tune shows up without listening. ?wav=<tune> also offers a WAV download.
+const out = document.getElementById('out'), lines = [];
+try {
+  const { _dev: { TUNES, INST, freq } } = await import('../public/js/music.js');
+  const q = new URLSearchParams(location.search);
+  for (const [name, tune] of Object.entries(TUNES)) {
+    const secs = 16, ac = new OfflineAudioContext(1, 44100 * secs, 44100), master = ac.createGain();
+    master.gain.value = 0.16;
+    master.connect(ac.destination);
+    const gains = tune.parts.map(p => { const g = ac.createGain(); g.gain.value = p.vol; g.connect(master); return g; });
+    const dt = 30 / tune.bpm;
+    for (let step = 0, t = 0.05; t < secs - 0.5; step++, t += dt)
+      tune.parts.forEach((p, i) => {
+        const tok = p.steps[step % p.steps.length];
+        if (tok === '.' || tok === '-') return;
+        let len = 1;
+        while (p.steps[(step + len) % p.steps.length] === '-' && len < p.steps.length) len++;
+        if (tok === 'x') INST[p.inst](ac, gains[i], t, 0, dt);
+        else for (const n of tok.split('+')) { const f = freq(n); if (!(f > 20 && f < 5000)) throw new Error(`${name}: bad note ${n}`); INST[p.inst](ac, gains[i], t, f, dt * len * 0.95); }
+      });
+    const buf = await ac.startRendering(), d = buf.getChannelData(0);
+    let peak = 0, sum = 0;
+    for (const v of d) { peak = Math.max(peak, Math.abs(v)); sum += v * v; }
+    const lens = tune.parts.map(p => p.steps.length);
+    lines.push(`${name.padEnd(11)} bpm ${tune.bpm}  peak ${peak.toFixed(3)}  rms ${Math.sqrt(sum / d.length).toFixed(4)}  part lengths ${lens.join(',')}`);
+  }
+} catch (e) {
+  lines.push('CRASH ' + e.message);
+}
+out.textContent = lines.join('\n');
+</script>
+</html>
