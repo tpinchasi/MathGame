@@ -7,7 +7,8 @@ import { sfx } from './sound.js';
 export const ROUNDS = 5, PASS = 4;
 const PRAISE = ['נכון!', 'מעולה!', 'בול!', 'יפה מאוד!', 'כל הכבוד!', 'מדויק!'];
 
-export function play(root, { ch, level, onExit, onDone, onHelp }) {
+// battle (optional, for bosses): see battle.js; a decided fight ends the challenge early.
+export function play(root, { ch, level, onExit, onDone, onHelp, battle }) {
   let idx = 0, correct = 0, round, widget, tries, hintIdx, open = false, exitArmed = false;
   const seen = new Set();
 
@@ -26,6 +27,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
       h('div', { class: 'p-title' }, h('b', {}, ch.title), h('span', { class: 'lv' }, '★'.repeat(level))),
       h('div', { class: 'dots' }, dots),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'הסבר', onclick: () => onHelp && onHelp() }, '?')),
+    battle ? battle.el : null,
     h('section', { class: 'p-body' }, prompt, visual, wbox, fb),
     h('footer', { class: 'p-foot' }, hintBtn, checkBtn, nextBtn));
 
@@ -121,19 +123,21 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
     dots[idx].classList.add(ok ? 'ok' : 'bad');
     checkBtn.hidden = hintBtn.hidden = true;
     nextBtn.hidden = false;
-    nextBtn.textContent = idx === ROUNDS - 1 ? 'סיום' : 'הבא';
+    nextBtn.textContent = idx === ROUNDS - 1 || (battle && battle.over()) ? 'סיום' : 'הבא';
     nextBtn.focus({ preventScroll: true });
   }
 
   function win() {
     correct++;
     sfx('ok');
+    if (battle) battle.hit();
     fb.className = 'feedback good';
     fb.innerHTML = `<b>${pick(PRAISE)}</b>`;
     finish(true);
   }
 
   function lose() {
+    if (battle) battle.miss();
     if (round.answer != null && widget.set) widget.set(round.answer);
     fb.className = 'feedback bad';
     setText(fb, `<b>הפתרון:</b> ${round.explain || ''}`);
@@ -143,7 +147,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp }) {
   function next() {
     if (open) return;
     idx++;
-    if (idx >= ROUNDS) return onDone(correct);
+    if (idx >= ROUNDS || (battle && battle.over())) return onDone(correct, idx);
     start();
   }
 

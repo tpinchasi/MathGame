@@ -5,6 +5,7 @@ import { play, ROUNDS, PASS } from './engine.js';
 import { h, setText } from './util.js';
 import { accountant } from './art.js';
 import { sfx } from './sound.js';
+import { battle } from './battle.js';
 
 const app = document.getElementById('app');
 // ?dev opens every challenge and level, for testing
@@ -159,17 +160,18 @@ function playScreen(g, w, i, lvl) {
   const ch = w.challenges[i];
   if (!unlocked(w, i) || (!DEV && lvl > st.level(ch.id) + 1)) return go(`#/world/${w.id}`);
   useGame(g);
-  const root = h('div', { class: 'play' });
+  const root = h('div', { class: 'play' }), boss = i === w.challenges.length - 1;
   app.innerHTML = '';
   app.append(root);
   cleanup = play(root, {
     ch, level: lvl,
+    battle: boss ? battle({ ...g.fighter(w, g.worlds.map(bossBeaten)), color: w.color, boss: w.boss }) : null,
     onExit: () => go(`#/world/${w.id}`),
     onHelp: () => intro(ch),
-    onDone: correct => {
+    onDone: (correct, played) => {
       cleanup();
       cleanup = null;
-      resultScreen(g, w, i, lvl, correct);
+      resultScreen(g, w, i, lvl, correct, played);
     },
   });
   if (!st.introSeen(ch.id) && !DEV) {
@@ -183,8 +185,9 @@ function playScreen(g, w, i, lvl) {
 const prizeList = g => (g.id === 'space' ? chOf(g) : g.worlds.flatMap(w => w.challenges.slice(0, -1)));
 const prizeOf = (g, ch) => g.prize(prizeList(g).indexOf(ch));
 
-function resultScreen(g, w, i, lvl, correct) {
-  const ch = w.challenges[i], passed = correct >= PASS, first = st.record(ch.id, lvl, correct, ROUNDS, passed);
+// played: rounds actually played (a boss fight can end before the fifth)
+function resultScreen(g, w, i, lvl, correct, played = ROUNDS) {
+  const ch = w.challenges[i], passed = correct >= PASS, first = st.record(ch.id, lvl, correct, played, passed);
   const boss = i === w.challenges.length - 1, nextCh = w.challenges[i + 1];
   if (first) sfx('star');
   const prize = !boss && prizeOf(g, ch);
@@ -195,9 +198,9 @@ function resultScreen(g, w, i, lvl, correct) {
   window.scrollTo(0, 0);
   app.innerHTML = '';
   app.append(h('div', { class: 'result' },
-    h('h2', {}, passed ? 'כל הכבוד!' : 'כמעט!'),
+    h('h2', {}, boss ? (passed ? 'ניצחתם בקרב!' : `${w.boss} ניצח הפעם`) : passed ? 'כל הכבוד!' : 'כמעט!'),
     h('div', { class: 'big-stars' + (first ? ' pop' : '') }, stars(st.level(ch.id))),
-    h('p', { class: 'score' }, `${correct} מתוך ${ROUNDS} נכונות`),
+    h('p', { class: 'score' }, `${correct} מתוך ${played} נכונות`),
     passed ? null : h('p', {}, `כדי לעבור רמה צריך ${PASS} נכונות. עוד ניסיון?`),
     reward,
     h('div', { class: 'result-btns' },
