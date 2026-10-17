@@ -9,10 +9,18 @@ const TUNES = {
 };
 let ctx;
 
+// One audio context for effects and music. Browsers start it suspended until the first touch.
+export function audio() {
+  try {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  } catch {}
+  return ctx;
+}
+
 export function sfx(name) {
   if (flag('mute')) return;
   try {
-    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    audio();
     let t = ctx.currentTime;
     for (const [freq, dur] of TUNES[name]) {
       const o = ctx.createOscillator(), g = ctx.createGain();

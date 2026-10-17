@@ -6,6 +6,7 @@ import { h, setText } from './util.js';
 import { accountant } from './art.js';
 import { sfx } from './sound.js';
 import { battle } from './battle.js';
+import { music, musicChanged } from './music.js';
 
 const app = document.getElementById('app');
 // ?dev opens every challenge and level, for testing
@@ -61,6 +62,12 @@ function route() {
   return last ? mapScreen(last) : gradesScreen();
 }
 
+function musicBtn() {
+  const label = () => (st.flag('music') === false ? '🎵 מוזיקה כבויה' : '🎵 מוזיקה');
+  const b = h('button', { type: 'button', class: 'btn ghost', onclick: () => { st.flag('music', st.flag('music') === false); b.textContent = label(); musicChanged(); } }, label());
+  return b;
+}
+
 function muteBtn() {
   const label = () => (st.flag('mute') ? '🔇 צלילים כבויים' : '🔊 צלילים');
   const b = h('button', { type: 'button', class: 'btn ghost', onclick: () => { st.flag('mute', !st.flag('mute')); b.textContent = label(); } }, label());
@@ -71,6 +78,7 @@ const logo = () => h('div', { class: 'logo' }, h('span', { class: 'logo-art', ht
 
 function gradesScreen() {
   useGame(null);
+  music('menu-space');
   app.innerHTML = '';
   app.append(
     h('header', { class: 'top' }, logo()),
@@ -82,7 +90,7 @@ function gradesScreen() {
           h('b', {}, g.grades),
           h('span', {}, g.name),
           h('small', {}, `⭐ ${sum(chOf(g))} / ${chOf(g).length * 3}`))))),
-    h('nav', { class: 'map-nav' }, muteBtn(), h('a', { class: 'btn ghost', href: '#/parents' }, 'להורים')));
+    h('nav', { class: 'map-nav' }, musicBtn(), muteBtn(), h('a', { class: 'btn ghost', href: '#/parents' }, 'להורים')));
 }
 
 const storyKey = g => (g.id === 'space' ? 'story' : `story-${g.id}`);
@@ -96,6 +104,7 @@ function story(g) {
 
 function mapScreen(g) {
   useGame(g);
+  music(`menu-${g.id}`);
   app.innerHTML = '';
   app.append(
     h('header', { class: 'top' }, logo(), total(chOf(g))),
@@ -109,6 +118,7 @@ function mapScreen(g) {
         h('span', { class: 'pc-stars' }, `⭐ ${sum(w.challenges)} / ${w.challenges.length * 3}`)))),
     h('nav', { class: 'map-nav' },
       h('a', { class: 'btn', href: `#/hub/${g.id}` }, g.hub.btn),
+      musicBtn(),
       muteBtn(),
       h('a', { class: 'btn ghost', href: '#/parents' }, 'להורים')));
   if (!st.flag(storyKey(g)) && !DEV) story(g);
@@ -142,6 +152,7 @@ function levelPicker(w, i) {
 
 function worldScreen(g, w) {
   useGame(g);
+  music(w.id);
   const last = w.challenges.length - 1;
   app.innerHTML = '';
   app.append(
@@ -161,6 +172,7 @@ function playScreen(g, w, i, lvl) {
   if (!unlocked(w, i) || (!DEV && lvl > st.level(ch.id) + 1)) return go(`#/world/${w.id}`);
   useGame(g);
   const root = h('div', { class: 'play' }), boss = i === w.challenges.length - 1;
+  music(boss ? `boss-${g.id}` : w.id);
   app.innerHTML = '';
   app.append(root);
   cleanup = play(root, {
@@ -213,6 +225,7 @@ function resultScreen(g, w, i, lvl, correct, played = ROUNDS) {
 // Where the prizes are kept: the space station, the zoo's visitor centre or the lab's equipment cupboard.
 function hubScreen(g) {
   useGame(g);
+  music(`menu-${g.id}`);
   const done = g.worlds.map(bossBeaten), n = done.filter(Boolean).length;
   app.innerHTML = '';
   app.append(
