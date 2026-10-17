@@ -27,7 +27,7 @@ export function play(root, { ch, level, onExit, onDone, onHelp, battle }) {
       h('div', { class: 'p-title' }, h('b', {}, ch.title), h('span', { class: 'lv' }, '★'.repeat(level))),
       h('div', { class: 'dots' }, dots),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'הסבר', onclick: () => onHelp && onHelp() }, '?')),
-    battle ? battle.el : null,
+    ...(battle ? [battle.el] : []), // the DOM's append() would print a null as the word "null"
     h('section', { class: 'p-body' }, prompt, visual, wbox, fb),
     h('footer', { class: 'p-foot' }, hintBtn, checkBtn, nextBtn));
 

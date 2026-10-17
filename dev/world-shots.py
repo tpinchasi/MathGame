@@ -16,7 +16,7 @@ for i in range(count):
         page.logs.clear()
         page.js(f"location.hash = '#{i}/{lvl}'")
         time.sleep(0.25)
-        info = json.loads(page.js("""JSON.stringify({prompt: (document.querySelector('.prompt') || {}).textContent || '',
+        info = json.loads(page.js("""JSON.stringify({junk: /\\b(null|undefined|NaN)\\b|\\[object/.test((document.querySelector('.play') || document.body).innerText), prompt: (document.querySelector('.prompt') || {}).textContent || '',
           widget: !!document.querySelector('.wbox > *'), over: document.documentElement.scrollWidth - window.innerWidth,
           wide: (() => { const b = document.querySelector('.p-body'); if (!b) return 0; const c = b.getBoundingClientRect(); return [...document.querySelectorAll('.p-body *')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > c.right + 1 || r.left < c.left - 1); }).length; })()})"""))
         page.shot(f"{out}/{i}-{lvl}-a.png")
@@ -29,6 +29,8 @@ for i in range(count):
         page.js("document.querySelector('.feedback') && document.querySelector('.feedback').scrollIntoView({block: 'end'})")
         page.shot(f"{out}/{i}-{lvl}-b.png")
         problems = [l for l in page.logs if l.startswith("EXCEPTION")]
+        if info["junk"]:
+            problems.append("null/undefined/NaN shown on screen")
         if not info["prompt"] or not info["widget"]:
             problems.append("empty screen")
         if info["over"] > 0 or info["wide"]:
